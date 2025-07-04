@@ -1,5 +1,3 @@
-// app.js: WebTorrent streaming logic and UI handling
-
 const magnetForm = document.getElementById('magnet-form');
 const magnetInput = document.getElementById('magnet-input');
 const errorMsg = document.getElementById('error-msg');
@@ -11,30 +9,34 @@ let client = null;
 function showError(msg) {
   errorMsg.textContent = msg;
   errorMsg.classList.remove('hidden');
+  magnetForm.style.display = ''; // Show form on error
+  videoContainer.style.display = 'none';
 }
+
 function clearError() {
   errorMsg.textContent = '';
   errorMsg.classList.add('hidden');
 }
 
-function showVideo(url, mime) {
-  videoPlayer.src = url;
-  videoPlayer.type = mime;
-  videoPlayer.load();
+function showVideo() {
   videoContainer.style.display = '';
+  magnetForm.style.display = 'none'; // Hide form after streaming
 }
 
-function resetVideo() {
+function resetUI() {
+  videoContainer.style.display = 'none';
+  magnetForm.style.display = '';
   videoPlayer.pause();
   videoPlayer.removeAttribute('src');
   videoPlayer.load();
-  videoContainer.style.display = 'none';
 }
 
-magnetForm.addEventListener('submit', async (e) => {
+document.getElementById('back-btn')?.addEventListener('click', resetUI);
+
+magnetForm.addEventListener('submit', function (e) {
   e.preventDefault();
   clearError();
-  resetVideo();
+  resetUI();
 
   const magnetURI = magnetInput.value.trim();
   if (!magnetURI.startsWith("magnet:")) {
@@ -45,7 +47,6 @@ magnetForm.addEventListener('submit', async (e) => {
     showError("WebTorrent is not supported in this browser.");
     return;
   }
-  // Clean up previous client
   if (client) {
     try { client.destroy(); } catch {}
     client = null;
@@ -53,7 +54,6 @@ magnetForm.addEventListener('submit', async (e) => {
   client = new WebTorrent();
 
   client.add(magnetURI, torrent => {
-    // Find first video file
     const file = torrent.files.find(f =>
       /\.(mp4|webm|mkv)$/i.test(f.name)
     );
@@ -62,16 +62,12 @@ magnetForm.addEventListener('submit', async (e) => {
       client.destroy();
       return;
     }
-    // Stream to video tag
-    file.renderTo(videoPlayer, {
-      autoplay: true,
-      controls: true
-    }, err => {
+    file.renderTo(videoPlayer, { autoplay: true, controls: true }, err => {
       if (err) {
         showError("Failed to stream video: " + err.message);
         client.destroy();
       } else {
-        videoContainer.style.display = '';
+        showVideo();
       }
     });
     torrent.on('error', err => {
