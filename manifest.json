@@ -1,35 +1,16 @@
 {
-  "name": "Online Video Stream",
-  "short_name": "VideoStream",
-  "description": "Stream torrent videos instantly in your browser using magnet links.",
-  "start_url": "/",
+  "name": "Magnet2Download Pro",
+  "short_name": "Magnet2DL",
+  "start_url": ".",
   "display": "standalone",
-  "background_color": "#111827",
-  "theme_color": "#111827",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/icons/icon-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/icons/icon-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    },
-    {
-      "src": "/icons/maskable-icon-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/icons/screenshot1.png",
-      "sizes": "540x720",
-      "type": "image/png"
+      "src": "/favicon.svg",
+      "sizes": "128x128",
+      "type": "image/svg+xml"
     }
   ]
 }
