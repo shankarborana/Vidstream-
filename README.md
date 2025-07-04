@@ -6,7 +6,7 @@
 
 ## 🚀 Features
 
-- **Stream from magnet links** using [WebTorrent.js](https://webtorrent.io/)
+- **Stream from magnet links** using [WebTorrent.js](#)
 - **Mobile-first**, responsive, clean UI (Tailwind CSS)
 - **Dark mode** with auto-detect and manual switch
 - **PWA installable**: Works offline, supports "Add to Home Screen"
@@ -30,7 +30,7 @@
 
 1. **इस प्रोजेक्ट को डाउनलोड या क्लोन करें**
 2. **Vercel, Netlify, Firebase या किसी भी static host पर अपलोड करें**
-3. **साइट खोलें और कोई magnet लिंक पेस्ट करें** (जैसे [Public Domain Torrents](https://publicdomainmovie.net/))
+3. **साइट खोलें और कोई magnet लिंक पेस्ट करें** (जैसे [Public Domain Torrents](#))
 4. **वीडियो तुरंत स्ट्रीम करें!**
 
 ---
