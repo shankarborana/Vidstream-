@@ -1,38 +1,44 @@
-# Vidstream-
+# Magnet2Download Pro
 
-# Online Video Stream
+A browser-based, mobile-first tool to convert torrent magnet links to direct downloads using WebTorrent.js – fully static, animated, and ad-ready. Deploy on GitHub Pages or Vercel with zero backend.
 
-**Torrent video streaming in your browser. No downloads, no server, no signup. Fast, clean, PWA-ready, and mobile-friendly.**
+## Features
 
-## 🚀 Features
+- Paste magnet link and fetch torrent file info
+- Download any file directly in the browser (WebTorrent.js)
+- Real-time download progress bars
+- Copy direct download link to clipboard
+- Animated, mobile-first UI (Tailwind CSS)
+- Light/Dark mode
+- Full error handling
+- Responsive ad slots framework (`<!-- Paste your ad code here -->`)
+- Installable as a PWA
+- 100% static, Vercel/Netlify/GitHub deployable
 
-- **Stream from magnet links** using [WebTorrent.js](#)
-- **Mobile-first**, responsive, clean UI (Tailwind CSS)
-- **Dark mode** with auto-detect and manual switch
-- **PWA installable**: Works offline, supports "Add to Home Screen"
-- **SEO-optimized**: Semantic HTML, Open Graph, Twitter Card, JSON-LD
-- **Ad slots**: Easily add your AdSense or affiliate code
-- **Custom HTML section**: Paste banners, YouTube embeds, or messages
-- **No backend/server needed**: 100% static and privacy-friendly
+## Deployment
+
+1. **GitHub:**
+   - Push this repo to GitHub.
+
+2. **Vercel:**
+   - Import the repo into Vercel.
+   - Deploy as a static site. No extra config needed.
+
+3. **Local Dev:**
+   - `npm install` (for Tailwind CLI, optional)
+   - `npm run dev` (if using Tailwind CLI)
+   - Or just open `index.html` directly.
+
+## Tech Stack
+
+- HTML5, Tailwind CSS
+- Vanilla JS
+- [WebTorrent.js](https://webtorrent.io/)
+- FileSaver.js (optional, for downloads)
+- No Node.js server or backend required.
+
+## Ads
+
+To add ads, paste your ad scripts inside the marked slots in `index.html`. Ad slots are responsive and styled with Tailwind.
 
 ---
-
-## 🛠️ How to Use / कैसे इस्तेमाल करें
-
-### English
-
-1. **Download or clone this repo**
-2. **Upload to Vercel, Netlify, Firebase, or any static host**
-3. **Open your site and paste a magnet link** (e.g. from [Public Domain Torrents](https://publicdomainmovie.net/))
-4. **Start streaming video instantly!**
-
-### हिन्दी (Hindi)
-
-1. **इस प्रोजेक्ट को डाउनलोड या क्लोन करें**
-2. **Vercel, Netlify, Firebase या किसी भी static host पर अपलोड करें**
-3. **साइट खोलें और कोई magnet लिंक पेस्ट करें** (जैसे [Public Domain Torrents](#))
-4. **वीडियो तुरंत स्ट्रीम करें!**
-
----
-
-## 🏗️ Folder/File Structure
