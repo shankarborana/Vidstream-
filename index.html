@@ -1,144 +1,102 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="en" class="scroll-smooth" data-theme="light">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>Online Video Stream – Torrent Video Streaming</title>
-  <meta name="description" content="Stream torrent videos instantly in your browser using magnet links. No downloads needed. Fast, clean, mobile-friendly, and PWA-ready." />
-  <meta name="keywords" content="torrent video streaming, magnet link, online video, WebTorrent, PWA, static site, no server" />
-  <meta name="theme-color" content="#111827" />
-  
-  <!-- Open Graph -->
-  <meta property="og:title" content="Online Video Stream" />
-  <meta property="og:description" content="Stream torrent videos instantly in your browser using magnet links. No downloads needed." />
-  <meta property="og:image" content="/icons/og-image.png" />
-  <meta property="og:url" content="https://your-domain.com/" />
-  <meta property="og:type" content="website" />
-
-  <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Online Video Stream" />
-  <meta name="twitter:description" content="Stream torrent videos instantly in your browser using magnet links." />
-  <meta name="twitter:image" content="/icons/og-image.png" />
-
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
-
-  <!-- Favicon & Icons -->
-  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png" />
-  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
-  <link rel="manifest" href="/manifest.json" />
-
-  <!-- Tailwind CSS CDN (for production, prefer purged build for performance) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Magnet2Download Pro – Magnet to Direct Download Tool</title>
+  <meta name="description" content="Convert torrent magnet links to direct downloads in your browser. No backend. 100% static, mobile-first, animated, and ad-ready.">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <meta name="theme-color" content="#0f172a">
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- WebTorrent.js -->
+  <script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
+  <!-- FileSaver.js (optional for better downloads) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <!-- Animate.css (for basic fade/slide effects) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+</head>
+<body class="bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 transition-colors duration-300 min-h-screen flex flex-col">
+
+  <!-- HEADER -->
+  <header class="w-full py-5 px-4 flex items-center justify-between shadow-md bg-white/80 dark:bg-zinc-800/80 backdrop-blur sticky top-0 z-40 transition duration-300">
+    <div class="flex items-center gap-2">
+      <img src="favicon.svg" alt="Magnet2Download Logo" class="w-8 h-8">
+      <h1 class="font-bold text-lg md:text-2xl tracking-tight">Magnet2Download <span class="text-blue-500">Pro</span></h1>
+    </div>
+    <button id="theme-toggle" class="rounded p-2 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition" title="Toggle Light/Dark">
+      <svg id="icon-sun" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2m11-11h-2M3 12H1m16.95 7.07l-1.41-1.41M6.34 6.34l-1.41-1.41m12.02 0l-1.41 1.41M6.34 17.66l-1.41 1.41"/></svg>
+      <svg id="icon-moon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 0010 9.79z"/></svg>
+    </button>
+  </header>
+
+  <!-- AD SLOT (TOP) -->
+  <div class="flex justify-center py-2 w-full max-w-4xl mx-auto">
+    <div class="w-full flex justify-center ad-slot" id="ad-slot-top">
+      <!-- Paste your ad code here (Desktop: 728x90, Mobile: 320x50) -->
+      <!-- Example placeholder: -->
+      <div class="bg-gray-200 dark:bg-gray-700 rounded-md w-full max-w-md h-12 flex items-center justify-center text-sm text-gray-500">Ad Slot (728x90/320x50)</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <main class="flex-1 flex flex-col items-center w-full px-2">
+    <div class="w-full max-w-2xl mx-auto mt-6 p-4 bg-white dark:bg-zinc-800 rounded-xl shadow-lg animate__animated animate__fadeIn relative overflow-hidden">
+      <!-- Magnet input section -->
+      <form id="magnet-form" class="flex flex-col gap-3">
+        <label for="magnet-input" class="font-semibold text-base">Paste Magnet Link:</label>
+        <div class="flex gap-2 items-center">
+          <input id="magnet-input" type="text"
+            class="flex-1 px-3 py-2 rounded-l-md border border-zinc-300 dark:border-zinc-700 focus:ring-2 focus:ring-blue-400 dark:bg-zinc-900 transition"
+            placeholder="magnet:?xt=urn:btih:..."
+            autocomplete="off"
+            required>
+          <button type="submit"
+            class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold px-4 py-2 rounded-r-md shadow hover:scale-105 hover:from-indigo-500 transition-transform duration-150 active:scale-95"
+            id="submit-btn">
+            Fetch
+          </button>
+        </div>
+        <span id="error-msg" class="text-red-500 font-medium text-sm hidden"></span>
+      </form>
+
+      <!-- Torrent info & file list -->
+      <div id="torrent-info" class="mt-8 space-y-4 hidden animate__animated animate__fadeIn">
+        <div class="mb-2">
+          <div class="font-semibold text-lg" id="torrent-name"></div>
+          <div class="text-sm text-zinc-500" id="torrent-size"></div>
+        </div>
+        <div id="file-list" class="space-y-2"></div>
+        <div id="torrent-status" class="text-blue-500 mt-2 text-sm"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- AD SLOT (BOTTOM) -->
+  <div class="flex justify-center py-3 w-full max-w-4xl mx-auto">
+    <div class="w-full flex justify-center ad-slot" id="ad-slot-bottom">
+      <!-- Paste your ad code here (Desktop: 728x90, Mobile: 320x50) -->
+      <!-- Example placeholder: -->
+      <div class="bg-gray-200 dark:bg-gray-700 rounded-md w-full max-w-md h-12 flex items-center justify-center text-sm text-gray-500">Ad Slot (728x90/320x50)</div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="w-full text-center py-4 text-xs text-zinc-400 dark:text-zinc-600">
+    &copy; 2025 Magnet2Download Pro. Powered by <a class="underline hover:text-blue-500" href="https://webtorrent.io/" target="_blank">WebTorrent.js</a>. No logs. 100% client-side.
+  </footer>
+
+  <!-- PWA Service Worker Registration -->
   <script>
-    tailwind.config = { darkMode: 'class' };
-  </script>
-  <!-- PWA service worker -->
-  <script>
-    if('serviceWorker' in navigator) {
+    if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js');
+        navigator.serviceWorker.register('sw.js');
       });
     }
   </script>
-  <!-- Structured Data (JSON-LD) -->
-  <script type="application/ld+json">
-  {
-    "@context": "http://schema.org",
-    "@type": "WebApplication",
-    "name": "Online Video Stream",
-    "url": "https://your-domain.com/",
-    "description": "Stream torrent videos instantly in your browser using magnet links.",
-    "applicationCategory": "VideoStreamingApplication",
-    "operatingSystem": "All",
-    "browserRequirements": "Requires JavaScript. Works on modern browsers.",
-    "image": "https://your-domain.com/icons/og-image.png"
-  }
-  </script>
-</head>
-<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-inter min-h-screen flex flex-col">
 
-  <!-- Banner for important notice -->
-  <div class="w-full bg-yellow-50 dark:bg-yellow-900 text-yellow-900 dark:text-yellow-100 px-4 py-2 text-center text-sm font-semibold">
-    🚀 New: Stream videos from magnet links instantly! No signup, no downloads. <a href="#how" class="underline">Learn how</a>
-  </div>
-
-  <!-- Navbar -->
-  <nav class="flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800 shadow-md">
-    <div class="flex items-center space-x-3">
-      <img src="/icons/favicon-32x32.png" alt="App Logo" class="h-8 w-8 rounded" />
-      <span class="text-lg md:text-xl font-bold tracking-tight">Online Video Stream</span>
-    </div>
-    <!-- Dark Mode Toggle -->
-    <button id="theme-toggle" aria-label="Toggle dark mode" class="p-2 rounded-md text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-      <svg id="theme-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <!-- Icon set by JS -->
-      </svg>
-    </button>
-  </nav>
-
-  <!-- AD SLOT HEADER START -->
-  <!-- Paste your AdSense or affiliate code here -->
-  <!-- AD SLOT HEADER END -->
-
-  <main class="flex-1 flex flex-col items-center px-2 md:px-0 py-6">
-    <section class="w-full max-w-xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
-      <h1 class="text-2xl md:text-3xl font-bold mb-2 text-center">Stream Torrent Video Instantly</h1>
-      <p class="mb-4 text-center text-gray-600 dark:text-gray-300">Paste a magnet link below to start streaming video files directly in your browser.</p>
-      <form id="magnet-form" class="flex flex-col sm:flex-row items-center gap-2 mb-4">
-        <input 
-          type="text" 
-          id="magnet-input" 
-          class="flex-1 px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-          placeholder="Paste magnet link here..." 
-          autocomplete="off" 
-          required
-          aria-label="Magnet link" 
-        />
-        <button 
-          type="submit" 
-          class="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow transition"
-          aria-label="Stream"
-        >Stream</button>
-      </form>
-      <div id="error-msg" class="hidden text-center text-red-600 dark:text-red-400 text-sm mb-2"></div>
-      <!-- Video Player Container -->
-      <div id="video-container" class="w-full aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center relative" style="display:none;">
-        <video id="video-player" class="w-full h-full" controls preload="metadata" poster="/icons/video-placeholder.png"></video>
-      </div>
-      <!-- AD SLOT VIDEO START -->
-      <!-- Paste your AdSense or affiliate code here -->
-      <!-- AD SLOT VIDEO END -->
-    </section>
-
-    <!-- CUSTOM HTML SECTION START -->
-    <section class="w-full max-w-xl mx-auto mb-6">
-      <!-- Paste your banners, YouTube embed, or messages here -->
-    </section>
-    <!-- CUSTOM HTML SECTION END -->
-
-    <section id="how" class="w-full max-w-xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow p-4 text-sm mt-2">
-      <h2 class="text-lg font-semibold mb-2">How It Works?</h2>
-      <ol class="list-decimal list-inside space-y-1">
-        <li>Copy a magnet link of a video torrent (.mp4/.webm/.mkv recommended).</li>
-        <li>Paste it above and click <span class="font-semibold">Stream</span>.</li>
-        <li>The video will load using WebTorrent in your browser. No downloads, no signups.</li>
-        <li>Enjoy safe, private, decentralized streaming with open-source tech.</li>
-      </ol>
-      <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Note: This works best for well-seeded, non-copyrighted video torrents.</p>
-    </section>
-  </main>
-
-  <footer class="w-full text-center text-xs py-6 text-gray-500 dark:text-gray-400">
-    © 2025 Online Video Stream. No files stored. Powered by <a href="#" target="_blank" rel="noopener" class="underline">WebTorrent</a>.
-  </footer>
-
-  <!-- WebTorrent.js (from CDN) -->
-  <script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
-  <!-- App logic -->
-  <script src="/js/app.js"></script>
-  <script src="/js/theme.js"></script>
+  <!-- APP LOGIC -->
+  <script src="app.js"></script>
 </body>
 </html>
