@@ -1,667 +1,424 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Magnet2Download Pro - Torrent to Direct Download</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Magnet2Download Pro - Torrent Magnet to Direct Download</title>
+    <script src="https://cdn.jsdelivr.net/npm/webtorrent@1.12.0/webtorrent.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'bounce-slow': 'bounce 2s infinite'
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-        
-        :root {
-            --primary: #4361ee;
-            --primary-dark: #3a56d4;
-            --secondary: #7209b7;
-            --dark: #1e293b;
-            --light: #f8fafc;
+        @keyframes wave {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+            100% { transform: translateY(0); }
         }
-        
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
-            min-height: 100vh;
-            transition: all 0.3s ease;
-            overflow-x: hidden;
+        .wave-animation {
+            animation: wave 1.5s infinite;
         }
-        
-        .dark body {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        .wave-animation:nth-child(2) {
+            animation-delay: 0.2s;
         }
-        
-        .card {
-            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-            border-radius: 16px;
-            overflow: hidden;
+        .wave-animation:nth-child(3) {
+            animation-delay: 0.4s;
         }
-        
-        .dark .card {
-            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
-            background: #1e293b;
-        }
-        
         .progress-bar {
             transition: width 0.5s ease;
-            height: 12px;
-            border-radius: 6px;
         }
-        
-        .file-item {
+        .download-link {
+            word-break: break-all;
+        }
+        .card {
             transition: all 0.3s ease;
-            border-radius: 12px;
         }
-        
-        .file-item:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
-        
-        .ad-container {
-            border: 1px dashed #cbd5e1;
-            border-radius: 12px;
-            min-height: 250px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(241, 245, 249, 0.5);
+        .flip-in {
+            animation: flipIn 0.6s ease forwards;
         }
-        
-        .dark .ad-container {
-            border-color: #334155;
-            background: rgba(30, 41, 59, 0.3);
+        @keyframes flipIn {
+            0% { transform: rotateX(90deg); opacity: 0; }
+            100% { transform: rotateX(0deg); opacity: 1; }
         }
-        
-        .magnet-input:focus {
-            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.3);
-        }
-        
-        .torrent-card {
-            max-height: 0;
-            opacity: 0;
-            overflow: hidden;
-            transition: all 0.5s ease;
-        }
-        
-        .torrent-card.active {
-            max-height: 1000px;
-            opacity: 1;
-        }
-        
-        .download-btn {
-            transition: all 0.2s ease;
-            border-radius: 10px;
-            font-weight: 500;
-        }
-        
-        .download-btn:hover {
-            transform: scale(1.05);
-        }
-        
-        .wave-bg {
-            background: linear-gradient(90deg, #4361ee, #7209b7, #4361ee);
-            background-size: 200% auto;
-            animation: gradientWave 3s linear infinite;
-        }
-        
-        @keyframes gradientWave {
-            0% { background-position: 0% 50%; }
-            100% { background-position: 200% 50%; }
-        }
-        
-        .pulse {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        
-        .float {
-            animation: float 3s ease-in-out infinite;
-        }
-        
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
-        }
-        
-        .fade-in {
-            animation: fadeIn 0.5s ease-out forwards;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .status-indicator {
-            height: 10px;
-            width: 10px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 8px;
-        }
-        
-        .status-connected { background-color: #10B981; }
-        .status-connecting { background-color: #F59E0B; }
-        .status-disconnected { background-color: #EF4444; }
     </style>
 </head>
-<body class="dark:bg-gray-900 dark:text-gray-200">
-    <!-- Header Section -->
-    <header class="py-4 px-4 bg-white dark:bg-gray-800 shadow-md sticky top-0 z-50">
-        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
-            <div class="flex items-center mb-4 md:mb-0">
-                <i class="fas fa-magnet text-2xl text-blue-500 mr-3 animate-pulse"></i>
-                <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Magnet2Download<span class="text-blue-500">Pro</span></h1>
-            </div>
-            
-            <div class="flex items-center space-x-4">
-                <div class="hidden md:flex items-center">
-                    <span class="status-indicator status-disconnected" id="connection-status"></span>
-                    <span id="connection-text">Disconnected</span>
+<body class="bg-gray-50 dark:bg-gray-900 min-h-full flex flex-col">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold flex items-center">
+                        <i class="fas fa-magnet mr-3 text-yellow-300"></i>
+                        Magnet2Download Pro
+                    </h1>
+                    <p class="mt-1 opacity-90">Convert torrent magnet links to direct HTTP downloads</p>
                 </div>
-                <button id="theme-toggle" class="p-3 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
-                    <i class="fas fa-moon dark:hidden"></i>
-                    <i class="fas fa-sun hidden dark:block"></i>
+                <button id="theme-toggle" class="bg-white/20 hover:bg-white/30 p-2 rounded-full transition">
+                    <i class="fas fa-moon text-white"></i>
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- Hero Section -->
-    <section class="wave-bg py-12 px-4 text-white">
-        <div class="container mx-auto text-center max-w-4xl">
-            <h2 class="text-4xl md:text-5xl font-bold mb-4 animate-float">Convert Magnet Links to Direct Downloads</h2>
-            <p class="text-xl mb-8 opacity-90">No software required. 100% browser-based torrent downloading solution</p>
-            <div class="flex flex-wrap justify-center gap-4 mb-8">
-                <div class="flex items-center bg-white/20 px-4 py-2 rounded-full">
-                    <i class="fas fa-bolt mr-2"></i>Instant Conversion
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <!-- Hero Section -->
+        <section class="text-center mb-12">
+            <div class="max-w-2xl mx-auto">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4 dark:text-white">Convert Magnet Links to Direct Downloads</h2>
+                <p class="text-lg text-gray-600 dark:text-gray-300 mb-6">
+                    No signup required • 100% client-side • Free and open source
+                </p>
+                <div class="flex justify-center space-x-2 mb-8">
+                    <div class="wave-animation h-3 w-3 bg-blue-500 rounded-full"></div>
+                    <div class="wave-animation h-3 w-3 bg-indigo-500 rounded-full"></div>
+                    <div class="wave-animation h-3 w-3 bg-purple-500 rounded-full"></div>
                 </div>
-                <div class="flex items-center bg-white/20 px-4 py-2 rounded-full">
-                    <i class="fas fa-shield-alt mr-2"></i>Secure & Private
-                </div>
-                <div class="flex items-center bg-white/20 px-4 py-2 rounded-full">
-                    <i class="fas fa-mobile-alt mr-2"></i>Mobile Friendly
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Main Content -->
-    <main class="container mx-auto px-4 py-8 max-w-4xl">
-        <!-- Input Section -->
-        <div class="card bg-white dark:bg-gray-800 rounded-xl p-6 mb-8 fade-in">
-            <div class="flex items-center mb-4">
-                <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mr-3">
-                    <i class="fas fa-link text-blue-500"></i>
-                </div>
-                <h3 class="text-xl font-bold text-gray-800 dark:text-white">Enter Magnet Link</h3>
-            </div>
-            
-            <div class="flex flex-col md:flex-row gap-3">
-                <input 
-                    type="text" 
-                    id="magnet-input" 
-                    placeholder="magnet:?xt=urn:btih:..." 
-                    class="magnet-input flex-grow px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                <button 
-                    id="fetch-btn" 
-                    class="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition flex items-center justify-center"
-                >
-                    Fetch Torrent <i class="fas fa-cloud-download-alt ml-2"></i>
-                </button>
-            </div>
-            
-            <div class="mt-4 text-sm">
-                <p class="font-medium mb-2">Try these sample magnet links:</p>
-                <div class="flex flex-wrap gap-2">
-                    <button class="sample-btn px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded text-sm" data-magnet="magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fsintel.torrent">Sintel (Video)</button>
-                    <button class="sample-btn px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded text-sm" data-magnet="magnet:?xt=urn:btih:dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c&dn=Big+Buck+Bunny&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fbig-buck-bunny.torrent">Big Buck Bunny (Video)</button>
-                    <button class="sample-btn px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded text-sm" data-magnet="magnet:?xt=urn:btih:3d0d4e4a8e7b9a5e0d4e4a8e7b9a5e0d4e4a8e7b9&dn=Sample+PDF+Collection">PDF Collection</button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Connection Status -->
-        <div id="connection-info" class="card bg-white dark:bg-gray-800 rounded-xl p-4 mb-8 hidden">
-            <div class="flex items-center">
-                <div class="status-indicator status-connecting mr-3" id="active-status"></div>
-                <div>
-                    <h4 class="font-bold" id="status-title">Connecting to peers...</h4>
-                    <p class="text-sm text-gray-600 dark:text-gray-400" id="status-desc">Searching for peers to fetch torrent metadata</p>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Torrent Info Section -->
-        <div id="torrent-info" class="torrent-card card bg-white dark:bg-gray-800 rounded-xl p-6 mb-8">
-            <div class="flex items-center mb-4">
-                <div class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center mr-3">
-                    <i class="fas fa-info-circle text-green-500"></i>
-                </div>
-                <h3 class="text-xl font-bold text-gray-800 dark:text-white">Torrent Information</h3>
-            </div>
-            
-            <div class="mb-6">
-                <div class="flex justify-between mb-2">
-                    <span class="font-medium">Torrent Name:</span>
-                    <span id="torrent-name" class="font-semibold truncate max-w-xs md:max-w-md">Loading...</span>
-                </div>
-                <div class="flex justify-between mb-2">
-                    <span class="font-medium">Total Size:</span>
-                    <span id="torrent-size">-</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="font-medium">Files:</span>
-                    <span id="torrent-files">-</span>
-                </div>
-            </div>
-            
-            <div class="mb-6">
-                <div class="flex justify-between mb-2">
-                    <span class="font-medium">Download Progress:</span>
-                    <span id="download-percent">0%</span>
-                </div>
-                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-                    <div id="progress-bar" class="progress-bar bg-gradient-to-r from-blue-500 to-purple-600" style="width: 0%"></div>
-                </div>
-            </div>
-            
-            <h4 class="font-bold mb-3">Files in Torrent:</h4>
-            <div id="file-list" class="space-y-3">
-                <!-- Files will be listed here dynamically -->
-            </div>
-        </div>
-        
-        <!-- Ad Slots -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div class="ad-container">
-                <p class="text-gray-500 dark:text-gray-400">Ad Space (300x250)</p>
-            </div>
-            <div class="ad-container">
-                <p class="text-gray-500 dark:text-gray-400">Ad Space (300x250)</p>
-            </div>
-        </div>
-        
-        <!-- Features Section -->
-        <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            <div class="card bg-white dark:bg-gray-800 rounded-xl p-6 text-center">
-                <div class="w-16 h-16 mx-auto rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mb-4">
-                    <i class="fas fa-bolt text-2xl text-blue-500"></i>
-                </div>
-                <h3 class="text-xl font-bold mb-2">Fast Conversion</h3>
-                <p class="text-gray-600 dark:text-gray-300">Convert magnet links to direct downloads in seconds without any software installation.</p>
-            </div>
-            
-            <div class="card bg-white dark:bg-gray-800 rounded-xl p-6 text-center">
-                <div class="w-16 h-16 mx-auto rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center mb-4">
-                    <i class="fas fa-lock text-2xl text-green-500"></i>
-                </div>
-                <h3 class="text-xl font-bold mb-2">Secure & Private</h3>
-                <p class="text-gray-600 dark:text-gray-300">All processing happens in your browser. No servers involved, ensuring maximum privacy.</p>
-            </div>
-            
-            <div class="card bg-white dark:bg-gray-800 rounded-xl p-6 text-center">
-                <div class="w-16 h-16 mx-auto rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center mb-4">
-                    <i class="fas fa-mobile-alt text-2xl text-purple-500"></i>
-                </div>
-                <h3 class="text-xl font-bold mb-2">Mobile Friendly</h3>
-                <p class="text-gray-600 dark:text-gray-300">Works perfectly on all devices - smartphones, tablets, and desktops.</p>
             </div>
         </section>
-        
-        <!-- Footer -->
-        <footer class="bg-gray-800 text-gray-300 py-8 px-4 rounded-xl">
-            <div class="container mx-auto max-w-4xl">
-                <div class="flex flex-col md:flex-row justify-between items-center mb-6">
-                    <div class="flex items-center mb-4 md:mb-0">
-                        <i class="fas fa-magnet text-2xl text-blue-500 mr-3"></i>
-                        <h3 class="text-xl font-bold">Magnet2Download<span class="text-blue-400">Pro</span></h3>
-                    </div>
-                    <div class="flex space-x-4">
-                        <a href="#" class="hover:text-white transition"><i class="fab fa-github"></i></a>
-                        <a href="#" class="hover:text-white transition"><i class="fab fa-twitter"></i></a>
-                        <a href="#" class="hover:text-white transition"><i class="fab fa-discord"></i></a>
+
+        <!-- Main Converter -->
+        <section class="max-w-3xl mx-auto">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden card">
+                <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                    <h3 class="text-xl font-semibold dark:text-white">Enter Magnet Link</h3>
+                    <div class="mt-4 flex flex-col sm:flex-row gap-3">
+                        <input 
+                            type="text" 
+                            id="magnet-input" 
+                            placeholder="magnet:?xt=urn:btih:..." 
+                            class="flex-grow px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        >
+                        <div class="flex space-x-2">
+                            <button 
+                                id="convert-btn" 
+                                class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition flex items-center justify-center"
+                            >
+                                <i class="fas fa-bolt mr-2"></i> Convert
+                            </button>
+                            <button 
+                                id="demo-btn" 
+                                class="px-4 py-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white font-medium rounded-lg transition flex items-center justify-center"
+                            >
+                                <i class="fas fa-vial mr-2"></i> Demo
+                            </button>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="text-center text-sm">
-                    <p>© 2023 Magnet2Download Pro. This is a demo application. All processing happens in your browser.</p>
-                    <p class="mt-2">Disclaimer: This tool is for educational purposes only. Always respect copyright laws in your jurisdiction.</p>
+
+                <!-- Progress Section -->
+                <div id="progress-section" class="hidden p-6 border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex justify-between mb-2">
+                        <span class="font-medium dark:text-gray-300">Processing...</span>
+                        <span id="progress-percent" class="font-medium dark:text-gray-300">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                        <div id="progress-bar" class="progress-bar bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <div id="status-text" class="mt-3 text-sm text-gray-500 dark:text-gray-400">Connecting to peers...</div>
+                </div>
+
+                <!-- Results Section -->
+                <div id="results-section" class="hidden p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold dark:text-white">Download Files</h3>
+                        <button id="new-conversion" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                            <i class="fas fa-plus mr-1"></i> New Conversion
+                        </button>
+                    </div>
+                    
+                    <div id="file-list" class="space-y-4">
+                        <!-- Files will appear here dynamically -->
+                    </div>
                 </div>
             </div>
-        </footer>
+        </section>
+
+        <!-- Features Section -->
+        <section class="mt-16">
+            <h2 class="text-2xl font-bold text-center mb-12 dark:text-white">How It Works</h2>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md card">
+                    <div class="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mb-4">
+                        <i class="fas fa-link text-blue-600 dark:text-blue-400 text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2 dark:text-white">1. Paste Magnet Link</h3>
+                    <p class="text-gray-600 dark:text-gray-400">Copy any torrent magnet link and paste it into the input field. Use our demo button to test instantly.</p>
+                </div>
+                
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md card">
+                    <div class="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center mb-4">
+                        <i class="fas fa-cloud-download-alt text-indigo-600 dark:text-indigo-400 text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2 dark:text-white">2. Download Torrent</h3>
+                    <p class="text-gray-600 dark:text-gray-400">Our client fetches the torrent metadata and downloads the content directly in your browser.</p>
+                </div>
+                
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md card">
+                    <div class="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center mb-4">
+                        <i class="fas fa-file-download text-purple-600 dark:text-purple-400 text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2 dark:text-white">3. Get Direct Links</h3>
+                    <p class="text-gray-600 dark:text-gray-400">Once downloaded, we generate direct HTTP download links for all files in the torrent.</p>
+                </div>
+            </div>
+        </section>
     </main>
 
-    <!-- Script -->
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-gray-300 py-8 mt-12">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <h3 class="text-xl font-bold text-white mb-2">Magnet2Download Pro</h3>
+                    <p class="text-sm">Open source torrent conversion tool</p>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="#" class="hover:text-white transition">
+                        <i class="fab fa-github text-lg"></i>
+                    </a>
+                    <a href="#" class="hover:text-white transition">
+                        <i class="fab fa-twitter text-lg"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="mt-6 pt-6 border-t border-gray-700 text-center text-sm">
+                <p>This tool works entirely in your browser. No files are uploaded to any server. Download at your own risk.</p>
+            </div>
+        </div>
+    </footer>
+
     <script>
-        // Theme toggle
+        // DOM Elements
+        const magnetInput = document.getElementById('magnet-input');
+        const convertBtn = document.getElementById('convert-btn');
+        const demoBtn = document.getElementById('demo-btn');
+        const progressSection = document.getElementById('progress-section');
+        const progressBar = document.getElementById('progress-bar');
+        const progressPercent = document.getElementById('progress-percent');
+        const statusText = document.getElementById('status-text');
+        const resultsSection = document.getElementById('results-section');
+        const fileList = document.getElementById('file-list');
+        const newConversionBtn = document.getElementById('new-conversion');
         const themeToggle = document.getElementById('theme-toggle');
+
+        // Initialize WebTorrent client
+        const client = new WebTorrent();
+        let currentTorrent = null;
+
+        // Demo magnet link (Sintel movie - small file for testing)
+        const demoMagnet = 'magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fsintel.torrent';
+
+        // Theme toggle
         themeToggle.addEventListener('click', () => {
-            document.documentElement.classList.toggle('dark');
-            localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+            const isDark = document.documentElement.classList.contains('dark');
+            document.documentElement.classList.toggle('dark', !isDark);
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+            themeToggle.innerHTML = isDark ? '<i class="fas fa-moon text-white"></i>' : '<i class="fas fa-sun text-white"></i>';
         });
 
         // Initialize theme
-        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        if (localStorage.getItem('theme') === 'dark' || 
+            (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
+            themeToggle.innerHTML = '<i class="fas fa-sun text-white"></i>';
         } else {
             document.documentElement.classList.remove('dark');
+            themeToggle.innerHTML = '<i class="fas fa-moon text-white"></i>';
         }
 
-        // DOM Elements
-        const magnetInput = document.getElementById('magnet-input');
-        const fetchBtn = document.getElementById('fetch-btn');
-        const torrentInfo = document.getElementById('torrent-info');
-        const torrentName = document.getElementById('torrent-name');
-        const torrentSize = document.getElementById('torrent-size');
-        const torrentFiles = document.getElementById('torrent-files');
-        const progressBar = document.getElementById('progress-bar');
-        const downloadPercent = document.getElementById('download-percent');
-        const fileList = document.getElementById('file-list');
-        const connectionInfo = document.getElementById('connection-info');
-        const statusTitle = document.getElementById('status-title');
-        const statusDesc = document.getElementById('status-desc');
-        const activeStatus = document.getElementById('active-status');
-        const connectionStatus = document.getElementById('connection-status');
-        const connectionText = document.getElementById('connection-text');
-        
-        // WebTorrent client
-        const client = new WebTorrent();
-        
-        // Working magnet links for testing
-        const sampleLinks = [
-            'magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fsintel.torrent',
-            'magnet:?xt=urn:btih:dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c&dn=Big+Buck+Bunny&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fbig-buck-bunny.torrent'
-        ];
-        
-        // Prefill with a working magnet link
-        magnetInput.value = sampleLinks[0];
-        
-        // Update connection status
-        function updateConnectionStatus(status) {
-            connectionStatus.className = 'status-indicator ' + status;
-            connectionText.textContent = status.charAt(0).toUpperCase() + status.slice(1);
-        }
-        
-        // Update active status
-        function updateActiveStatus(status, title, desc) {
-            activeStatus.className = 'status-indicator ' + status;
-            statusTitle.textContent = title;
-            statusDesc.textContent = desc;
-            connectionInfo.classList.remove('hidden');
-        }
-        
-        // Sample button functionality
-        document.querySelectorAll('.sample-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                magnetInput.value = btn.getAttribute('data-magnet');
-                fetchTorrent(btn.getAttribute('data-magnet'));
-            });
+        // Load demo magnet
+        demoBtn.addEventListener('click', () => {
+            magnetInput.value = demoMagnet;
+            convertBtn.click();
         });
-        
-        // Fetch torrent function
-        fetchBtn.addEventListener('click', () => {
-            const magnet = magnetInput.value.trim();
+
+        // New conversion
+        newConversionBtn.addEventListener('click', () => {
+            resetUI();
+            magnetInput.value = '';
+            magnetInput.focus();
+        });
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            else if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+            else return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+        }
+
+        // Reset UI
+        function resetUI() {
+            // Remove existing torrent
+            if (currentTorrent) {
+                currentTorrent.destroy();
+                currentTorrent = null;
+            }
             
-            if (!magnet) {
-                showError('Please enter a magnet link');
+            // Hide sections
+            progressSection.classList.add('hidden');
+            resultsSection.classList.add('hidden');
+            
+            // Clear file list
+            fileList.innerHTML = '';
+        }
+
+        // Convert magnet to direct download
+        convertBtn.addEventListener('click', async () => {
+            const magnetLink = magnetInput.value.trim();
+            
+            if (!magnetLink) {
+                alert('Please enter a magnet link');
                 return;
             }
             
-            if (!magnet.startsWith('magnet:')) {
-                showError('Invalid magnet link format');
-                return;
-            }
+            resetUI();
             
-            fetchTorrent(magnet);
-        });
-        
-        // Fetch torrent information
-        function fetchTorrent(magnet) {
-            // Reset UI
-            torrentInfo.classList.add('active');
-            torrentName.textContent = 'Loading...';
-            torrentSize.textContent = '-';
-            torrentFiles.textContent = '-';
-            progressBar.style.width = '0%';
-            downloadPercent.textContent = '0%';
-            fileList.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin text-xl text-blue-500"></i> Connecting to torrent network...</div>';
-            
-            updateActiveStatus('status-connecting', 'Connecting to peers', 'Searching for peers to fetch torrent metadata');
-            updateConnectionStatus('status-connecting');
-            
-            // Clean up any existing torrent
-            client.torrents.forEach(torrent => {
-                client.remove(torrent);
-            });
-            
-            // Add torrent to client
-            const torrent = client.add(magnet);
-            
-            // Handle torrent events
-            torrent.on('metadata', () => {
-                // Torrent metadata has been fetched
-                torrentName.textContent = torrent.name;
-                torrentSize.textContent = formatBytes(torrent.length);
-                torrentFiles.textContent = torrent.files.length + ' file(s)';
-                
-                updateActiveStatus('status-connected', 'Connected to peers', 'Torrent metadata fetched successfully');
-                
-                // Display files
-                fileList.innerHTML = '';
-                torrent.files.forEach(file => {
-                    const fileItem = document.createElement('div');
-                    fileItem.className = 'file-item bg-gray-50 dark:bg-gray-700 rounded-lg p-4 flex flex-col md:flex-row justify-between items-start md:items-center';
-                    fileItem.innerHTML = `
-                        <div class="mb-2 md:mb-0 flex-1 min-w-0">
-                            <div class="font-medium truncate">${file.name}</div>
-                            <div class="text-sm text-gray-500 dark:text-gray-400">${formatBytes(file.length)}</div>
-                        </div>
-                        <div class="flex space-x-2 w-full md:w-auto">
-                            <button class="copy-link-btn download-btn px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium text-sm flex-1" data-file="${file.name}">
-                                <i class="fas fa-copy mr-1"></i> Copy Link
-                            </button>
-                            <button class="download-file-btn download-btn px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium text-sm flex-1" data-file="${file.name}">
-                                <i class="fas fa-download mr-1"></i> Download
-                            </button>
-                        </div>
-                    `;
-                    fileList.appendChild(fileItem);
-                });
-                
-                // Add event listeners for download buttons
-                document.querySelectorAll('.download-file-btn').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const fileName = btn.getAttribute('data-file');
-                        const file = torrent.files.find(f => f.name === fileName);
-                        downloadFile(file);
-                    });
-                });
-                
-                // Add event listeners for copy link buttons
-                document.querySelectorAll('.copy-link-btn').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const fileName = btn.getAttribute('data-file');
-                        const file = torrent.files.find(f => f.name === fileName);
-                        copyFileLink(file);
-                    });
-                });
-            });
-            
-            // Update progress
-            torrent.on('download', bytes => {
-                const percent = Math.round(torrent.progress * 100);
-                progressBar.style.width = `${percent}%`;
-                downloadPercent.textContent = `${percent}%`;
-            });
-            
-            // Handle errors
-            torrent.on('error', err => {
-                showError(`Torrent error: ${err.message}`);
-                updateActiveStatus('status-disconnected', 'Connection failed', 'Could not connect to torrent peers');
-            });
-            
-            torrent.on('warning', warn => {
-                console.warn('Torrent warning:', warn);
-            });
-            
-            torrent.on('noPeers', (announceType) => {
-                showError('No peers found. Torrent may be unavailable.');
-                updateActiveStatus('status-disconnected', 'No peers found', 'Could not find any peers for this torrent');
-            });
-            
-            torrent.on('done', () => {
-                updateActiveStatus('status-connected', 'Download complete', 'Torrent files are ready for download');
-                showSuccess('Torrent download completed!');
-            });
-            
-            // Handle client errors
-            client.on('error', err => {
-                showError(`WebTorrent error: ${err.message}`);
-                updateActiveStatus('status-disconnected', 'Connection error', 'WebTorrent encountered an error');
-            });
-        }
-        
-        // Download file function
-        function downloadFile(file) {
-            showInfo(`Starting download: ${file.name}`);
-            
-            // Create a stream for the file
-            const stream = file.createReadStream();
-            const chunks = [];
-            
-            stream.on('data', chunk => {
-                chunks.push(chunk);
-            });
-            
-            stream.on('end', () => {
-                const blob = new Blob(chunks);
-                saveAs(blob, file.name);
-                showSuccess(`Downloaded: ${file.name}`);
-            });
-            
-            stream.on('error', err => {
-                showError(`Error downloading file: ${err.message}`);
-            });
-        }
-        
-        // Copy file link function
-        function copyFileLink(file) {
-            // Create a blob URL for the file
-            const url = URL.createObjectURL(new Blob([], { type: 'application/octet-stream' }));
-            
-            // Create temporary input to copy the link
-            const tempInput = document.createElement('input');
-            tempInput.value = url;
-            document.body.appendChild(tempInput);
-            tempInput.select();
+            // Show progress section
+            progressSection.classList.remove('hidden');
+            statusText.textContent = 'Connecting to peers...';
             
             try {
-                const successful = document.execCommand('copy');
-                if (successful) {
-                    showSuccess('Download link copied to clipboard!');
-                } else {
-                    showError('Failed to copy link. Please try again.');
-                }
-            } catch (err) {
-                showError('Failed to copy link: ' + err);
-            }
-            
-            document.body.removeChild(tempInput);
-        }
-        
-        // Show error message
-        function showError(message) {
-            // Create toast notification
-            const toast = document.createElement('div');
-            toast.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center max-w-md z-50';
-            toast.innerHTML = `
-                <i class="fas fa-exclamation-circle mr-2"></i>
-                <span>${message}</span>
-            `;
-            
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.remove();
-            }, 5000);
-        }
-        
-        // Show success message
-        function showSuccess(message) {
-            // Create toast notification
-            const toast = document.createElement('div');
-            toast.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center max-w-md z-50';
-            toast.innerHTML = `
-                <i class="fas fa-check-circle mr-2"></i>
-                <span>${message}</span>
-            `;
-            
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.remove();
-            }, 3000);
-        }
-        
-        // Show info message
-        function showInfo(message) {
-            // Create toast notification
-            const toast = document.createElement('div');
-            toast.className = 'fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center max-w-md z-50';
-            toast.innerHTML = `
-                <i class="fas fa-info-circle mr-2"></i>
-                <span>${message}</span>
-            `;
-            
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.remove();
-            }, 3000);
-        }
-        
-        // Format bytes to human readable
-        function formatBytes(bytes, decimals = 2) {
-            if (bytes === 0) return '0 Bytes';
-            
-            const k = 1024;
-            const dm = decimals < 0 ? 0 : decimals;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-            
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-        }
-        
-        // Initialize app with sample torrent
-        document.addEventListener('DOMContentLoaded', () => {
-            // Show torrent section with animation
-            setTimeout(() => {
-                torrentInfo.classList.add('active');
-            }, 300);
-            
-            // Update connection status
-            updateConnectionStatus('status-disconnected');
-            
-            // Auto-connect to WebTorrent
-            setTimeout(() => {
-                client.on('torrent', () => {
-                    updateConnectionStatus('status-connected');
+                // Add the torrent
+                currentTorrent = client.add(magnetLink);
+                
+                currentTorrent.on('warning', err => {
+                    console.warn('Torrent warning:', err);
                 });
                 
-                client.on('error', () => {
-                    updateConnectionStatus('status-disconnected');
+                currentTorrent.on('error', err => {
+                    console.error('Torrent error:', err);
+                    statusText.textContent = 'Error: ' + err.message;
+                    progressBar.style.width = '0%';
+                    progressPercent.textContent = '0%';
                 });
-            }, 1000);
+                
+                // Update progress
+                currentTorrent.on('download', bytes => {
+                    const percent = Math.floor(currentTorrent.progress * 100);
+                    progressBar.style.width = `${percent}%`;
+                    progressPercent.textContent = `${percent}%`;
+                    
+                    if (percent < 20) {
+                        statusText.textContent = `Connecting to peers (${currentTorrent.numPeers})...`;
+                    } else if (percent < 50) {
+                        statusText.textContent = `Downloading metadata...`;
+                    } else if (percent < 100) {
+                        statusText.textContent = `Downloading... ${formatFileSize(currentTorrent.downloaded)} of ${formatFileSize(currentTorrent.length)}`;
+                    }
+                });
+                
+                // When metadata is ready
+                currentTorrent.on('metadata', () => {
+                    statusText.textContent = `Found ${currentTorrent.files.length} files. Downloading...`;
+                });
+                
+                // When download is complete
+                currentTorrent.on('done', () => {
+                    progressBar.style.width = '100%';
+                    progressPercent.textContent = '100%';
+                    statusText.textContent = 'Processing completed! Generating download links...';
+                    
+                    setTimeout(() => {
+                        progressSection.classList.add('hidden');
+                        resultsSection.classList.remove('hidden');
+                        displayFiles(currentTorrent.files);
+                    }, 1000);
+                });
+                
+            } catch (err) {
+                console.error('Error adding torrent:', err);
+                statusText.textContent = 'Error: ' + err.message;
+            }
+        });
+
+        // Display files for download
+        function displayFiles(files) {
+            fileList.innerHTML = '';
+            
+            if (!files.length) {
+                fileList.innerHTML = '<div class="text-center py-8 text-gray-500">No files found in this torrent</div>';
+                return;
+            }
+            
+            files.forEach((file, index) => {
+                const fileCard = document.createElement('div');
+                fileCard.className = 'bg-gray-50 dark:bg-gray-700 rounded-lg p-4 flip-in';
+                fileCard.style.animationDelay = `${index * 0.1}s`;
+                
+                fileCard.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="flex items-center">
+                                <i class="fas fa-file ${file.name.endsWith('.mp4') ? 'text-red-500' : file.name.endsWith('.jpg') || file.name.endsWith('.png') ? 'text-green-500' : 'text-blue-500'} mr-3"></i>
+                                <div>
+                                    <h4 class="font-medium dark:text-gray-200 truncate max-w-xs md:max-w-md">${file.name}</h4>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">${formatFileSize(file.length)}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="download-file-btn px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center" data-index="${index}">
+                            <i class="fas fa-download mr-2"></i> Download
+                        </button>
+                    </div>
+                `;
+                
+                fileList.appendChild(fileCard);
+            });
+            
+            // Add download event listeners
+            document.querySelectorAll('.download-file-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    downloadFile(files[index]);
+                });
+            });
+        }
+
+        // Download a file
+        function downloadFile(file) {
+            // Create a download link
+            file.getBlobURL((err, url) => {
+                if (err) {
+                    alert('Error generating download link: ' + err.message);
+                    return;
+                }
+                
+                // Create a temporary anchor to trigger download
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = file.name;
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                a.click();
+                
+                // Clean up
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 100);
+            });
+        }
+
+        // Initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            // Any initialization code if needed
         });
     </script>
 </body>
