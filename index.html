@@ -9,33 +9,23 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    animation: {
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                        'float': 'float 3s ease-in-out infinite',
-                    },
-                    keyframes: {
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-10px)' },
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <link rel="manifest" href="/manifest.json">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #7209b7;
+            --dark: #1e293b;
+            --light: #f8fafc;
+        }
         
         body {
             font-family: 'Poppins', sans-serif;
             background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
             min-height: 100vh;
-            transition: background 0.3s ease;
+            transition: all 0.3s ease;
         }
         
         .dark body {
@@ -45,27 +35,34 @@
         .card {
             box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
+            border-radius: 16px;
+            overflow: hidden;
         }
         
         .dark .card {
             box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
+            background: #1e293b;
         }
         
         .progress-bar {
             transition: width 0.5s ease;
+            height: 12px;
+            border-radius: 6px;
         }
         
         .file-item {
             transition: all 0.3s ease;
+            border-radius: 12px;
         }
         
         .file-item:hover {
             transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
         
         .ad-container {
             border: 1px dashed #cbd5e1;
-            border-radius: 8px;
+            border-radius: 12px;
             min-height: 250px;
             display: flex;
             align-items: center;
@@ -79,7 +76,7 @@
         }
         
         .magnet-input:focus {
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.3);
         }
         
         .torrent-card {
@@ -96,44 +93,80 @@
         
         .download-btn {
             transition: all 0.2s ease;
+            border-radius: 10px;
+            font-weight: 500;
         }
         
         .download-btn:hover {
             transform: scale(1.05);
         }
         
-        .wave {
-            animation: wave 8s linear infinite;
+        .wave-bg {
+            background: linear-gradient(90deg, #4361ee, #7209b7, #4361ee);
+            background-size: 200% auto;
+            animation: gradientWave 3s linear infinite;
         }
         
-        @keyframes wave {
-            0% { background-position-x: 0; }
-            100% { background-position-x: 1000px; }
+        @keyframes gradientWave {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+        
+        .pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .float {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
 <body class="dark:bg-gray-900 dark:text-gray-200">
     <!-- Header Section -->
-    <header class="py-6 px-4 bg-white dark:bg-gray-800 shadow-md">
-        <div class="container mx-auto flex justify-between items-center">
-            <div class="flex items-center">
-                <i class="fas fa-magnet text-2xl text-blue-500 mr-3 animate-pulse-slow"></i>
+    <header class="py-4 px-4 bg-white dark:bg-gray-800 shadow-md sticky top-0 z-50">
+        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
+            <div class="flex items-center mb-4 md:mb-0">
+                <i class="fas fa-magnet text-2xl text-blue-500 mr-3 animate-pulse"></i>
                 <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Magnet2Download<span class="text-blue-500">Pro</span></h1>
             </div>
+            
             <div class="flex items-center space-x-4">
-                <div class="ad-container w-64 hidden md:block">
-                    <p class="text-gray-500 dark:text-gray-400">Ad Space (728x90)</p>
+                <div class="ad-container w-48 hidden md:block">
+                    <p class="text-gray-500 dark:text-gray-400 text-sm">Ad Space (300x250)</p>
                 </div>
-                <button id="theme-toggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700">
+                <button id="theme-toggle" class="p-3 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
                     <i class="fas fa-moon dark:hidden"></i>
                     <i class="fas fa-sun hidden dark:block"></i>
+                </button>
+                <button id="pwa-install" class="px-4 py-2 bg-purple-600 text-white rounded-lg hidden">
+                    <i class="fas fa-download mr-2"></i>Install App
                 </button>
             </div>
         </div>
     </header>
 
     <!-- Hero Section -->
-    <section class="py-12 px-4 bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-700 dark:to-indigo-800 text-white">
+    <section class="wave-bg py-12 px-4 text-white">
         <div class="container mx-auto text-center max-w-4xl">
             <h2 class="text-4xl md:text-5xl font-bold mb-4 animate-float">Convert Magnet Links to Direct Downloads</h2>
             <p class="text-xl mb-8 opacity-90">No software required. 100% browser-based torrent downloading solution</p>
@@ -154,12 +187,12 @@
     <!-- Main Content -->
     <main class="container mx-auto px-4 py-8 max-w-4xl">
         <!-- Ad Slot - Mobile Top -->
-        <div class="ad-container w-full h-32 mb-8 md:hidden">
+        <div class="ad-container w-full h-32 mb-6 md:hidden">
             <p class="text-gray-500 dark:text-gray-400">Ad Space (320x100)</p>
         </div>
         
         <!-- Input Section -->
-        <div class="card bg-white dark:bg-gray-800 rounded-xl p-6 mb-8">
+        <div class="card bg-white dark:bg-gray-800 rounded-xl p-6 mb-8 fade-in">
             <div class="flex items-center mb-4">
                 <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mr-3">
                     <i class="fas fa-link text-blue-500"></i>
@@ -172,11 +205,11 @@
                     type="text" 
                     id="magnet-input" 
                     placeholder="magnet:?xt=urn:btih:..." 
-                    class="magnet-input flex-grow px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 focus:outline-none"
+                    class="magnet-input flex-grow px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                 <button 
                     id="fetch-btn" 
-                    class="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition"
+                    class="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition flex items-center justify-center"
                 >
                     Fetch Torrent <i class="fas fa-cloud-download-alt ml-2"></i>
                 </button>
@@ -204,7 +237,7 @@
             <div class="mb-6">
                 <div class="flex justify-between mb-2">
                     <span class="font-medium">Torrent Name:</span>
-                    <span id="torrent-name" class="font-semibold">Loading...</span>
+                    <span id="torrent-name" class="font-semibold truncate max-w-xs md:max-w-md">Loading...</span>
                 </div>
                 <div class="flex justify-between mb-2">
                     <span class="font-medium">Total Size:</span>
@@ -221,8 +254,8 @@
                     <span class="font-medium">Download Progress:</span>
                     <span id="download-percent">0%</span>
                 </div>
-                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4">
-                    <div id="progress-bar" class="progress-bar bg-blue-500 h-4 rounded-full" style="width: 0%"></div>
+                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                    <div id="progress-bar" class="progress-bar bg-gradient-to-r from-blue-500 to-purple-600" style="width: 0%"></div>
                 </div>
             </div>
             
@@ -280,6 +313,11 @@
                 </div>
             </div>
         </section>
+        
+        <!-- Ad Slot - Bottom -->
+        <div class="ad-container w-full h-32 my-8">
+            <p class="text-gray-500 dark:text-gray-400">Ad Space (728x90)</p>
+        </div>
     </main>
 
     <!-- Footer -->
@@ -330,6 +368,7 @@
         const progressBar = document.getElementById('progress-bar');
         const downloadPercent = document.getElementById('download-percent');
         const fileList = document.getElementById('file-list');
+        const pwaInstallBtn = document.getElementById('pwa-install');
         
         // WebTorrent client
         const client = new WebTorrent();
@@ -376,17 +415,17 @@
                 fileList.innerHTML = '';
                 torrent.files.forEach(file => {
                     const fileItem = document.createElement('div');
-                    fileItem.className = 'file-item bg-gray-50 dark:bg-gray-700 rounded-lg p-4 flex justify-between items-center';
+                    fileItem.className = 'file-item bg-gray-50 dark:bg-gray-700 rounded-lg p-4 flex flex-col md:flex-row justify-between items-start md:items-center';
                     fileItem.innerHTML = `
-                        <div>
-                            <div class="font-medium">${file.name}</div>
+                        <div class="mb-2 md:mb-0 flex-1 min-w-0">
+                            <div class="font-medium truncate">${file.name}</div>
                             <div class="text-sm text-gray-500 dark:text-gray-400">${formatBytes(file.length)}</div>
                         </div>
-                        <div class="flex space-x-2">
-                            <button class="copy-link-btn download-btn px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium text-sm" data-file="${file.name}">
+                        <div class="flex space-x-2 w-full md:w-auto">
+                            <button class="copy-link-btn download-btn px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium text-sm flex-1" data-file="${file.name}">
                                 <i class="fas fa-copy mr-1"></i> Copy Link
                             </button>
-                            <button class="download-file-btn download-btn px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium text-sm" data-file="${file.name}">
+                            <button class="download-file-btn download-btn px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium text-sm flex-1" data-file="${file.name}">
                                 <i class="fas fa-download mr-1"></i> Download
                             </button>
                         </div>
@@ -462,7 +501,7 @@
         function showError(message) {
             // Create toast notification
             const toast = document.createElement('div');
-            toast.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center max-w-md';
+            toast.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center max-w-md z-50';
             toast.innerHTML = `
                 <i class="fas fa-exclamation-circle mr-2"></i>
                 <span>${message}</span>
@@ -479,7 +518,7 @@
         function showSuccess(message) {
             // Create toast notification
             const toast = document.createElement('div');
-            toast.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center max-w-md';
+            toast.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center max-w-md z-50';
             toast.innerHTML = `
                 <i class="fas fa-check-circle mr-2"></i>
                 <span>${message}</span>
@@ -505,25 +544,41 @@
             return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
         }
         
-        // Simulate functionality for the demo
+        // PWA installation
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            pwaInstallBtn.classList.remove('hidden');
+            
+            pwaInstallBtn.addEventListener('click', () => {
+                e.prompt();
+                pwaInstallBtn.classList.add('hidden');
+            });
+        });
+        
+        // Initialize app
         document.addEventListener('DOMContentLoaded', () => {
+            // Show torrent section with animation
             setTimeout(() => {
                 torrentInfo.classList.add('active');
+            }, 300);
+            
+            // Simulate functionality for the demo
+            setTimeout(() => {
                 torrentName.textContent = 'Sintel (2010)';
                 torrentSize.textContent = '72.3 MB';
                 torrentFiles.textContent = '1 file';
                 
                 fileList.innerHTML = `
-                    <div class="file-item bg-gray-50 dark:bg-gray-700 rounded-lg p-4 flex justify-between items-center">
-                        <div>
-                            <div class="font-medium">sintel.mp4</div>
+                    <div class="file-item bg-gray-50 dark:bg-gray-700 rounded-lg p-4 flex flex-col md:flex-row justify-between items-start md:items-center">
+                        <div class="mb-2 md:mb-0 flex-1 min-w-0">
+                            <div class="font-medium truncate">sintel.mp4</div>
                             <div class="text-sm text-gray-500 dark:text-gray-400">72.3 MB</div>
                         </div>
-                        <div class="flex space-x-2">
-                            <button class="copy-link-btn download-btn px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium text-sm">
+                        <div class="flex space-x-2 w-full md:w-auto">
+                            <button class="copy-link-btn download-btn px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium text-sm flex-1">
                                 <i class="fas fa-copy mr-1"></i> Copy Link
                             </button>
-                            <button class="download-file-btn download-btn px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium text-sm">
+                            <button class="download-file-btn download-btn px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium text-sm flex-1">
                                 <i class="fas fa-download mr-1"></i> Download
                             </button>
                         </div>
