@@ -9,7 +9,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <link rel="manifest" href="/manifest.json">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
         
@@ -157,9 +156,6 @@
                 <button id="theme-toggle" class="p-3 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
                     <i class="fas fa-moon dark:hidden"></i>
                     <i class="fas fa-sun hidden dark:block"></i>
-                </button>
-                <button id="pwa-install" class="px-4 py-2 bg-purple-600 text-white rounded-lg hidden">
-                    <i class="fas fa-download mr-2"></i>Install App
                 </button>
             </div>
         </div>
@@ -368,13 +364,18 @@
         const progressBar = document.getElementById('progress-bar');
         const downloadPercent = document.getElementById('download-percent');
         const fileList = document.getElementById('file-list');
-        const pwaInstallBtn = document.getElementById('pwa-install');
         
         // WebTorrent client
         const client = new WebTorrent();
         
-        // Sample magnet link for demo
-        magnetInput.value = 'magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fsintel.torrent';
+        // Working magnet links for testing
+        const sampleLinks = [
+            'magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fsintel.torrent',
+            'magnet:?xt=urn:btih:dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c&dn=Big+Buck+Bunny&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fbig-buck-bunny.torrent'
+        ];
+        
+        // Prefill with a working magnet link
+        magnetInput.value = sampleLinks[0];
         
         // Fetch torrent function
         fetchBtn.addEventListener('click', () => {
@@ -402,10 +403,10 @@
             torrentFiles.textContent = '-';
             progressBar.style.width = '0%';
             downloadPercent.textContent = '0%';
-            fileList.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin text-xl text-blue-500"></i></div>';
+            fileList.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin text-xl text-blue-500"></i> Connecting to torrent network...</div>';
             
             // Add torrent to client
-            client.add(magnet, torrent => {
+            const torrent = client.add(magnet, (torrent) => {
                 // Torrent metadata has been fetched
                 torrentName.textContent = torrent.name;
                 torrentSize.textContent = formatBytes(torrent.length);
@@ -462,28 +463,39 @@
                 torrent.on('error', err => {
                     showError(`Torrent error: ${err.message}`);
                 });
+                
+                torrent.on('warning', warn => {
+                    console.warn('Torrent warning:', warn);
+                });
             });
             
             // Handle client errors
             client.on('error', err => {
                 showError(`WebTorrent error: ${err.message}`);
             });
+            
+            torrent.on('noPeers', (announceType) => {
+                showError('No peers found. Torrent may be unavailable.');
+            });
         }
         
-        // Download file function
+        // Download file function (FIXED)
         function downloadFile(file) {
+            showInfo(`Starting download: ${file.name}`);
+            
             file.getBlob((err, blob) => {
                 if (err) {
                     showError(`Error downloading file: ${err.message}`);
                     return;
                 }
                 
+                // Save the file
                 saveAs(blob, file.name);
                 showSuccess(`Downloaded: ${file.name}`);
             });
         }
         
-        // Copy file link function
+        // Copy file link function (FIXED)
         function copyFileLink(file) {
             file.getBlobURL((err, url) => {
                 if (err) {
@@ -491,9 +503,24 @@
                     return;
                 }
                 
-                navigator.clipboard.writeText(url)
-                    .then(() => showSuccess('Download link copied to clipboard!'))
-                    .catch(err => showError('Failed to copy link: ' + err));
+                // Create temporary input to copy the link
+                const tempInput = document.createElement('input');
+                tempInput.value = url;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                
+                try {
+                    const successful = document.execCommand('copy');
+                    if (successful) {
+                        showSuccess('Download link copied to clipboard!');
+                    } else {
+                        showError('Failed to copy link. Please try again.');
+                    }
+                } catch (err) {
+                    showError('Failed to copy link: ' + err);
+                }
+                
+                document.body.removeChild(tempInput);
             });
         }
         
@@ -531,6 +558,23 @@
             }, 3000);
         }
         
+        // Show info message
+        function showInfo(message) {
+            // Create toast notification
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center max-w-md z-50';
+            toast.innerHTML = `
+                <i class="fas fa-info-circle mr-2"></i>
+                <span>${message}</span>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+        
         // Format bytes to human readable
         function formatBytes(bytes, decimals = 2) {
             if (bytes === 0) return '0 Bytes';
@@ -544,67 +588,16 @@
             return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
         }
         
-        // PWA installation
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            pwaInstallBtn.classList.remove('hidden');
-            
-            pwaInstallBtn.addEventListener('click', () => {
-                e.prompt();
-                pwaInstallBtn.classList.add('hidden');
-            });
-        });
-        
-        // Initialize app
+        // Initialize app with sample torrent
         document.addEventListener('DOMContentLoaded', () => {
             // Show torrent section with animation
             setTimeout(() => {
                 torrentInfo.classList.add('active');
             }, 300);
             
-            // Simulate functionality for the demo
+            // Load sample torrent automatically
             setTimeout(() => {
-                torrentName.textContent = 'Sintel (2010)';
-                torrentSize.textContent = '72.3 MB';
-                torrentFiles.textContent = '1 file';
-                
-                fileList.innerHTML = `
-                    <div class="file-item bg-gray-50 dark:bg-gray-700 rounded-lg p-4 flex flex-col md:flex-row justify-between items-start md:items-center">
-                        <div class="mb-2 md:mb-0 flex-1 min-w-0">
-                            <div class="font-medium truncate">sintel.mp4</div>
-                            <div class="text-sm text-gray-500 dark:text-gray-400">72.3 MB</div>
-                        </div>
-                        <div class="flex space-x-2 w-full md:w-auto">
-                            <button class="copy-link-btn download-btn px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium text-sm flex-1">
-                                <i class="fas fa-copy mr-1"></i> Copy Link
-                            </button>
-                            <button class="download-file-btn download-btn px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium text-sm flex-1">
-                                <i class="fas fa-download mr-1"></i> Download
-                            </button>
-                        </div>
-                    </div>
-                `;
-                
-                // Simulate progress
-                let progress = 0;
-                const interval = setInterval(() => {
-                    progress += 1;
-                    progressBar.style.width = `${progress}%`;
-                    downloadPercent.textContent = `${progress}%`;
-                    
-                    if (progress >= 100) {
-                        clearInterval(interval);
-                    }
-                }, 50);
-                
-                // Add event listeners for demo buttons
-                document.querySelector('.download-file-btn').addEventListener('click', () => {
-                    showSuccess('Download started: sintel.mp4');
-                });
-                
-                document.querySelector('.copy-link-btn').addEventListener('click', () => {
-                    showSuccess('Download link copied to clipboard!');
-                });
+                fetchTorrent(sampleLinks[0]);
             }, 1000);
         });
     </script>
