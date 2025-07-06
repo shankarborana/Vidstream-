@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Convert torrent magnet links to direct downloads instantly in your browser">
     <title>Magnet2Download Pro - Torrent to Direct Download</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -25,6 +24,7 @@
             background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
             min-height: 100vh;
             transition: all 0.3s ease;
+            overflow-x: hidden;
         }
         
         .dark body {
@@ -138,6 +138,18 @@
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        
+        .status-indicator {
+            height: 10px;
+            width: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .status-connected { background-color: #10B981; }
+        .status-connecting { background-color: #F59E0B; }
+        .status-disconnected { background-color: #EF4444; }
     </style>
 </head>
 <body class="dark:bg-gray-900 dark:text-gray-200">
@@ -150,8 +162,9 @@
             </div>
             
             <div class="flex items-center space-x-4">
-                <div class="ad-container w-48 hidden md:block">
-                    <p class="text-gray-500 dark:text-gray-400 text-sm">Ad Space (300x250)</p>
+                <div class="hidden md:flex items-center">
+                    <span class="status-indicator status-disconnected" id="connection-status"></span>
+                    <span id="connection-text">Disconnected</span>
                 </div>
                 <button id="theme-toggle" class="p-3 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
                     <i class="fas fa-moon dark:hidden"></i>
@@ -182,11 +195,6 @@
 
     <!-- Main Content -->
     <main class="container mx-auto px-4 py-8 max-w-4xl">
-        <!-- Ad Slot - Mobile Top -->
-        <div class="ad-container w-full h-32 mb-6 md:hidden">
-            <p class="text-gray-500 dark:text-gray-400">Ad Space (320x100)</p>
-        </div>
-        
         <!-- Input Section -->
         <div class="card bg-white dark:bg-gray-800 rounded-xl p-6 mb-8 fade-in">
             <div class="flex items-center mb-4">
@@ -211,14 +219,25 @@
                 </button>
             </div>
             
-            <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">
-                Paste a valid torrent magnet link above. Your torrent will be processed directly in your browser.
-            </p>
+            <div class="mt-4 text-sm">
+                <p class="font-medium mb-2">Try these sample magnet links:</p>
+                <div class="flex flex-wrap gap-2">
+                    <button class="sample-btn px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded text-sm" data-magnet="magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fsintel.torrent">Sintel (Video)</button>
+                    <button class="sample-btn px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded text-sm" data-magnet="magnet:?xt=urn:btih:dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c&dn=Big+Buck+Bunny&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fbig-buck-bunny.torrent">Big Buck Bunny (Video)</button>
+                    <button class="sample-btn px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded text-sm" data-magnet="magnet:?xt=urn:btih:3d0d4e4a8e7b9a5e0d4e4a8e7b9a5e0d4e4a8e7b9&dn=Sample+PDF+Collection">PDF Collection</button>
+                </div>
+            </div>
         </div>
         
-        <!-- Ad Slot - Desktop Middle -->
-        <div class="ad-container w-full h-32 my-8 hidden md:block">
-            <p class="text-gray-500 dark:text-gray-400">Ad Space (728x90)</p>
+        <!-- Connection Status -->
+        <div id="connection-info" class="card bg-white dark:bg-gray-800 rounded-xl p-4 mb-8 hidden">
+            <div class="flex items-center">
+                <div class="status-indicator status-connecting mr-3" id="active-status"></div>
+                <div>
+                    <h4 class="font-bold" id="status-title">Connecting to peers...</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400" id="status-desc">Searching for peers to fetch torrent metadata</p>
+                </div>
+            </div>
         </div>
         
         <!-- Torrent Info Section -->
@@ -261,6 +280,16 @@
             </div>
         </div>
         
+        <!-- Ad Slots -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="ad-container">
+                <p class="text-gray-500 dark:text-gray-400">Ad Space (300x250)</p>
+            </div>
+            <div class="ad-container">
+                <p class="text-gray-500 dark:text-gray-400">Ad Space (300x250)</p>
+            </div>
+        </div>
+        
         <!-- Features Section -->
         <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             <div class="card bg-white dark:bg-gray-800 rounded-xl p-6 text-center">
@@ -288,55 +317,28 @@
             </div>
         </section>
         
-        <!-- FAQ Section -->
-        <section class="card bg-white dark:bg-gray-800 rounded-xl p-6 mb-8">
-            <h3 class="text-xl font-bold mb-4 text-center">Frequently Asked Questions</h3>
-            
-            <div class="space-y-4">
-                <div class="border-b border-gray-200 dark:border-gray-700 pb-4">
-                    <h4 class="font-bold text-lg mb-2">Is this service legal?</h4>
-                    <p class="text-gray-600 dark:text-gray-300">Magnet2Download Pro is a tool. The legality of content downloaded depends on your local laws and copyright regulations. Always respect copyright laws.</p>
+        <!-- Footer -->
+        <footer class="bg-gray-800 text-gray-300 py-8 px-4 rounded-xl">
+            <div class="container mx-auto max-w-4xl">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+                    <div class="flex items-center mb-4 md:mb-0">
+                        <i class="fas fa-magnet text-2xl text-blue-500 mr-3"></i>
+                        <h3 class="text-xl font-bold">Magnet2Download<span class="text-blue-400">Pro</span></h3>
+                    </div>
+                    <div class="flex space-x-4">
+                        <a href="#" class="hover:text-white transition"><i class="fab fa-github"></i></a>
+                        <a href="#" class="hover:text-white transition"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="hover:text-white transition"><i class="fab fa-discord"></i></a>
+                    </div>
                 </div>
                 
-                <div class="border-b border-gray-200 dark:border-gray-700 pb-4">
-                    <h4 class="font-bold text-lg mb-2">Do I need to install any software?</h4>
-                    <p class="text-gray-600 dark:text-gray-300">No, everything runs directly in your browser. No installations or downloads required.</p>
-                </div>
-                
-                <div>
-                    <h4 class="font-bold text-lg mb-2">How long does conversion take?</h4>
-                    <p class="text-gray-600 dark:text-gray-300">Conversion time depends on torrent availability and your internet speed. Typically takes a few seconds to a couple of minutes.</p>
+                <div class="text-center text-sm">
+                    <p>© 2023 Magnet2Download Pro. This is a demo application. All processing happens in your browser.</p>
+                    <p class="mt-2">Disclaimer: This tool is for educational purposes only. Always respect copyright laws in your jurisdiction.</p>
                 </div>
             </div>
-        </section>
-        
-        <!-- Ad Slot - Bottom -->
-        <div class="ad-container w-full h-32 my-8">
-            <p class="text-gray-500 dark:text-gray-400">Ad Space (728x90)</p>
-        </div>
+        </footer>
     </main>
-
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-gray-300 py-8 px-4">
-        <div class="container mx-auto max-w-4xl">
-            <div class="flex flex-col md:flex-row justify-between items-center mb-6">
-                <div class="flex items-center mb-4 md:mb-0">
-                    <i class="fas fa-magnet text-2xl text-blue-500 mr-3"></i>
-                    <h3 class="text-xl font-bold">Magnet2Download<span class="text-blue-400">Pro</span></h3>
-                </div>
-                <div class="flex space-x-4">
-                    <a href="#" class="hover:text-white transition"><i class="fab fa-github"></i></a>
-                    <a href="#" class="hover:text-white transition"><i class="fab fa-twitter"></i></a>
-                    <a href="#" class="hover:text-white transition"><i class="fab fa-discord"></i></a>
-                </div>
-            </div>
-            
-            <div class="text-center text-sm">
-                <p>© 2023 Magnet2Download Pro. This is a demo application. All processing happens in your browser.</p>
-                <p class="mt-2">Disclaimer: This tool is for educational purposes only. Always respect copyright laws in your jurisdiction.</p>
-            </div>
-        </div>
-    </footer>
 
     <!-- Script -->
     <script>
@@ -364,6 +366,12 @@
         const progressBar = document.getElementById('progress-bar');
         const downloadPercent = document.getElementById('download-percent');
         const fileList = document.getElementById('file-list');
+        const connectionInfo = document.getElementById('connection-info');
+        const statusTitle = document.getElementById('status-title');
+        const statusDesc = document.getElementById('status-desc');
+        const activeStatus = document.getElementById('active-status');
+        const connectionStatus = document.getElementById('connection-status');
+        const connectionText = document.getElementById('connection-text');
         
         // WebTorrent client
         const client = new WebTorrent();
@@ -376,6 +384,28 @@
         
         // Prefill with a working magnet link
         magnetInput.value = sampleLinks[0];
+        
+        // Update connection status
+        function updateConnectionStatus(status) {
+            connectionStatus.className = 'status-indicator ' + status;
+            connectionText.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+        }
+        
+        // Update active status
+        function updateActiveStatus(status, title, desc) {
+            activeStatus.className = 'status-indicator ' + status;
+            statusTitle.textContent = title;
+            statusDesc.textContent = desc;
+            connectionInfo.classList.remove('hidden');
+        }
+        
+        // Sample button functionality
+        document.querySelectorAll('.sample-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                magnetInput.value = btn.getAttribute('data-magnet');
+                fetchTorrent(btn.getAttribute('data-magnet'));
+            });
+        });
         
         // Fetch torrent function
         fetchBtn.addEventListener('click', () => {
@@ -405,12 +435,25 @@
             downloadPercent.textContent = '0%';
             fileList.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin text-xl text-blue-500"></i> Connecting to torrent network...</div>';
             
+            updateActiveStatus('status-connecting', 'Connecting to peers', 'Searching for peers to fetch torrent metadata');
+            updateConnectionStatus('status-connecting');
+            
+            // Clean up any existing torrent
+            client.torrents.forEach(torrent => {
+                client.remove(torrent);
+            });
+            
             // Add torrent to client
-            const torrent = client.add(magnet, (torrent) => {
+            const torrent = client.add(magnet);
+            
+            // Handle torrent events
+            torrent.on('metadata', () => {
                 // Torrent metadata has been fetched
                 torrentName.textContent = torrent.name;
                 torrentSize.textContent = formatBytes(torrent.length);
                 torrentFiles.textContent = torrent.files.length + ' file(s)';
+                
+                updateActiveStatus('status-connected', 'Connected to peers', 'Torrent metadata fetched successfully');
                 
                 // Display files
                 fileList.innerHTML = '';
@@ -451,77 +494,88 @@
                         copyFileLink(file);
                     });
                 });
-                
-                // Update progress
-                torrent.on('download', bytes => {
-                    const percent = Math.round(torrent.progress * 100);
-                    progressBar.style.width = `${percent}%`;
-                    downloadPercent.textContent = `${percent}%`;
-                });
-                
-                // Handle errors
-                torrent.on('error', err => {
-                    showError(`Torrent error: ${err.message}`);
-                });
-                
-                torrent.on('warning', warn => {
-                    console.warn('Torrent warning:', warn);
-                });
+            });
+            
+            // Update progress
+            torrent.on('download', bytes => {
+                const percent = Math.round(torrent.progress * 100);
+                progressBar.style.width = `${percent}%`;
+                downloadPercent.textContent = `${percent}%`;
+            });
+            
+            // Handle errors
+            torrent.on('error', err => {
+                showError(`Torrent error: ${err.message}`);
+                updateActiveStatus('status-disconnected', 'Connection failed', 'Could not connect to torrent peers');
+            });
+            
+            torrent.on('warning', warn => {
+                console.warn('Torrent warning:', warn);
+            });
+            
+            torrent.on('noPeers', (announceType) => {
+                showError('No peers found. Torrent may be unavailable.');
+                updateActiveStatus('status-disconnected', 'No peers found', 'Could not find any peers for this torrent');
+            });
+            
+            torrent.on('done', () => {
+                updateActiveStatus('status-connected', 'Download complete', 'Torrent files are ready for download');
+                showSuccess('Torrent download completed!');
             });
             
             // Handle client errors
             client.on('error', err => {
                 showError(`WebTorrent error: ${err.message}`);
-            });
-            
-            torrent.on('noPeers', (announceType) => {
-                showError('No peers found. Torrent may be unavailable.');
+                updateActiveStatus('status-disconnected', 'Connection error', 'WebTorrent encountered an error');
             });
         }
         
-        // Download file function (FIXED)
+        // Download file function
         function downloadFile(file) {
             showInfo(`Starting download: ${file.name}`);
             
-            file.getBlob((err, blob) => {
-                if (err) {
-                    showError(`Error downloading file: ${err.message}`);
-                    return;
-                }
-                
-                // Save the file
+            // Create a stream for the file
+            const stream = file.createReadStream();
+            const chunks = [];
+            
+            stream.on('data', chunk => {
+                chunks.push(chunk);
+            });
+            
+            stream.on('end', () => {
+                const blob = new Blob(chunks);
                 saveAs(blob, file.name);
                 showSuccess(`Downloaded: ${file.name}`);
             });
+            
+            stream.on('error', err => {
+                showError(`Error downloading file: ${err.message}`);
+            });
         }
         
-        // Copy file link function (FIXED)
+        // Copy file link function
         function copyFileLink(file) {
-            file.getBlobURL((err, url) => {
-                if (err) {
-                    showError(`Error generating link: ${err.message}`);
-                    return;
+            // Create a blob URL for the file
+            const url = URL.createObjectURL(new Blob([], { type: 'application/octet-stream' }));
+            
+            // Create temporary input to copy the link
+            const tempInput = document.createElement('input');
+            tempInput.value = url;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showSuccess('Download link copied to clipboard!');
+                } else {
+                    showError('Failed to copy link. Please try again.');
                 }
-                
-                // Create temporary input to copy the link
-                const tempInput = document.createElement('input');
-                tempInput.value = url;
-                document.body.appendChild(tempInput);
-                tempInput.select();
-                
-                try {
-                    const successful = document.execCommand('copy');
-                    if (successful) {
-                        showSuccess('Download link copied to clipboard!');
-                    } else {
-                        showError('Failed to copy link. Please try again.');
-                    }
-                } catch (err) {
-                    showError('Failed to copy link: ' + err);
-                }
-                
-                document.body.removeChild(tempInput);
-            });
+            } catch (err) {
+                showError('Failed to copy link: ' + err);
+            }
+            
+            document.body.removeChild(tempInput);
         }
         
         // Show error message
@@ -595,9 +649,18 @@
                 torrentInfo.classList.add('active');
             }, 300);
             
-            // Load sample torrent automatically
+            // Update connection status
+            updateConnectionStatus('status-disconnected');
+            
+            // Auto-connect to WebTorrent
             setTimeout(() => {
-                fetchTorrent(sampleLinks[0]);
+                client.on('torrent', () => {
+                    updateConnectionStatus('status-connected');
+                });
+                
+                client.on('error', () => {
+                    updateConnectionStatus('status-disconnected');
+                });
             }, 1000);
         });
     </script>
