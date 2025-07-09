@@ -52,20 +52,6 @@
             font-size: 0.75rem;
             font-weight: 500;
         }
-        .player-wrapper {
-            position: relative;
-            padding-bottom: 56.25%; /* 16:9 aspect ratio */
-            height: 0;
-            overflow: hidden;
-        }
-        .player-wrapper iframe,
-        .player-wrapper video {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
     </style>
     <script>
         tailwind.config = {
@@ -144,10 +130,10 @@
         <div id="playerSection" class="hidden mb-6">
             <div class="bg-white rounded-xl shadow-md overflow-hidden">
                 <div class="relative">
-                    <div class="player-wrapper">
-                        <video id="videoPlayer" controls class="w-full h-full">
-                            Your browser does not support the video tag.
-                        </video>
+                    <div class="video-container">
+                        <div id="videoPlayerContainer">
+                            <!-- Player will be inserted here -->
+                        </div>
                     </div>
                     <div class="absolute top-4 right-4 flex space-x-2">
                         <button id="fullscreenBtn" class="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70">
@@ -220,7 +206,7 @@
         const videoUrlInput = document.getElementById('videoUrl');
         const playButton = document.getElementById('playButton');
         const playerSection = document.getElementById('playerSection');
-        const videoPlayer = document.getElementById('videoPlayer');
+        const videoPlayerContainer = document.getElementById('videoPlayerContainer');
         const fullscreenBtn = document.getElementById('fullscreenBtn');
         const downloadBtn = document.getElementById('downloadBtn');
         const sampleVideoBtn = document.getElementById('sampleVideoBtn');
@@ -245,22 +231,6 @@
             {
                 url: 'https://dl8.webmfiles.org/big-buck-bunny_trailer.mkv',
                 title: 'Big Buck Bunny (MKV)'
-            },
-            {
-                url: 'https://filesamples.com/samples/video/avi/sample_640x360.avi',
-                title: 'Sample Video (AVI)'
-            },
-            {
-                url: 'https://filesamples.com/samples/video/mov/sample_640x360.mov',
-                title: 'Sample Video (MOV)'
-            },
-            {
-                url: 'https://sample-videos.com/video123/webm/720/big_buck_bunny_720p_1mb.webm',
-                title: 'Big Buck Bunny (WEBM)'
-            },
-            {
-                url: 'https://sample-videos.com/video123/3gp/240/big_buck_bunny_240p_1mb.3gp',
-                title: 'Big Buck Bunny (3GP)'
             }
         ];
 
@@ -303,7 +273,6 @@
             formatButtons.forEach(btn => {
                 btn.addEventListener('click', function() {
                     videoUrlInput.value = this.getAttribute('data-url');
-                    currentVideoUrl = this.getAttribute('data-url');
                     playVideo();
                 });
             });
@@ -354,14 +323,21 @@
             // Save to recent videos
             addToRecentVideos(url);
             
-            // Play video
+            // Play video based on type
             playerSection.classList.remove('hidden');
             
-            // Set video source
-            videoPlayer.src = url;
-            videoPlayer.load();
-            videoPlayer.play();
+            // Clear previous player
+            videoPlayerContainer.innerHTML = '';
             
+            // Create video element
+            const videoElement = document.createElement('video');
+            videoElement.id = 'videoPlayer';
+            videoElement.controls = true;
+            videoElement.className = 'w-full h-full';
+            videoElement.src = url;
+            videoElement.innerHTML = 'Your browser does not support the video tag.';
+            
+            videoPlayerContainer.appendChild(videoElement);
             document.getElementById('videoTitle').textContent = extractVideoTitle(url);
         }
 
@@ -474,7 +450,6 @@
                 btn.addEventListener('click', function() {
                     const url = this.getAttribute('data-url');
                     videoUrlInput.value = url;
-                    currentVideoUrl = url;
                     playVideo();
                 });
             });
@@ -482,14 +457,24 @@
 
         // Toggle fullscreen mode
         function toggleFullscreen() {
-            if (videoPlayer.requestFullscreen) {
-                videoPlayer.requestFullscreen();
-            } else if (videoPlayer.webkitRequestFullscreen) {
-                videoPlayer.webkitRequestFullscreen();
-            } else if (videoPlayer.mozRequestFullScreen) {
-                videoPlayer.mozRequestFullScreen();
-            } else if (videoPlayer.msRequestFullscreen) {
-                videoPlayer.msRequestFullscreen();
+            const element = videoPlayerContainer;
+            
+            if (!document.fullscreenElement) {
+                if (element.requestFullscreen) {
+                    element.requestFullscreen();
+                } else if (element.webkitRequestFullscreen) {
+                    element.webkitRequestFullscreen();
+                } else if (element.msRequestFullscreen) {
+                    element.msRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
             }
         }
 
