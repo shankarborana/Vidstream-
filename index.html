@@ -451,4 +451,137 @@
                     <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:bg-indigo-50 transition">
                         <div class="flex justify-between items-start">
                             <div>
-  
+                                <h4 class="font-medium text-gray-800 mb-1">${video.title}</h4>
+                                <div class="flex items-center">
+                                    <span class="format-badge bg-${formatColor}-500 text-white mr-2">${format}</span>
+                                    <p class="text-xs text-gray-500">${new Date(video.timestamp).toLocaleString()}</p>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button data-url="${video.url}" class="play-recent-btn px-3 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition">
+                                    <i class="fas fa-play mr-1"></i>Play
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            recentVideosContainer.innerHTML = html;
+            
+            // Add event listeners to new buttons
+            document.querySelectorAll('.play-recent-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const url = this.getAttribute('data-url');
+                    videoUrlInput.value = url;
+                    currentVideoUrl = url;
+                    playVideo();
+                });
+            });
+        }
+
+        // Toggle fullscreen mode
+        function toggleFullscreen() {
+            if (videoPlayer.requestFullscreen) {
+                videoPlayer.requestFullscreen();
+            } else if (videoPlayer.webkitRequestFullscreen) {
+                videoPlayer.webkitRequestFullscreen();
+            } else if (videoPlayer.mozRequestFullScreen) {
+                videoPlayer.mozRequestFullScreen();
+            } else if (videoPlayer.msRequestFullscreen) {
+                videoPlayer.msRequestFullscreen();
+            }
+        }
+
+        // Update fullscreen icon based on state
+        function updateFullscreenIcon() {
+            if (document.fullscreenElement || 
+                document.webkitFullscreenElement || 
+                document.mozFullScreenElement ||
+                document.msFullscreenElement) {
+                fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
+            } else {
+                fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
+            }
+        }
+
+        // Download video
+        function downloadVideo() {
+            if (!currentVideoUrl) {
+                showToast('No video loaded', 'error');
+                return;
+            }
+            
+            const a = document.createElement('a');
+            a.href = currentVideoUrl;
+            a.download = extractVideoTitle(currentVideoUrl) || 'video';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast('Download started', 'success');
+        }
+
+        // Load sample video
+        function loadSampleVideo() {
+            const randomVideo = sampleVideos[Math.floor(Math.random() * sampleVideos.length)];
+            videoUrlInput.value = randomVideo.url;
+            currentVideoUrl = randomVideo.url;
+            playVideo();
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg text-white ${
+                type === 'error' ? 'bg-red-500' : 'bg-green-500'
+            }`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'transition-opacity', 'duration-500');
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 500);
+            }, 3000);
+        }
+
+        // Check URL parameters for video link
+        function checkUrlForVideo() {
+            const params = new URLSearchParams(window.location.search);
+            const videoParam = params.get('video');
+            
+            if (videoParam) {
+                videoUrlInput.value = decodeURIComponent(videoParam);
+                currentVideoUrl = decodeURIComponent(videoParam);
+                playVideo();
+            }
+        }
+
+        // Widget resize functionality
+        function startResize(e) {
+            isResizing = true;
+            const widget = document.querySelector('.custom-widget');
+            startY = e.clientY;
+            startHeight = parseInt(document.defaultView.getComputedStyle(widget).height, 10);
+            e.preventDefault();
+        }
+
+        function resizeWidget(e) {
+            if (!isResizing) return;
+            const widget = document.querySelector('.custom-widget');
+            const height = startHeight + (e.clientY - startY);
+            if (height > 100 && height < window.innerHeight * 0.7) {
+                widget.style.height = `${height}px`;
+            }
+        }
+
+        function stopResize() {
+            isResizing = false;
+        }
+
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
