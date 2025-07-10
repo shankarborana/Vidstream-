@@ -13,6 +13,14 @@
         .video-container {
             aspect-ratio: 16/9;
             background-color: #000;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        .video-container.rotated {
+            aspect-ratio: 9/16;
         }
         @keyframes pulse {
             0% { transform: scale(1); }
@@ -35,22 +43,27 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #555;
         }
-        .custom-widget {
-            transition: height 0.3s ease;
-        }
-        .resize-handle {
-            height: 5px;
-            cursor: ns-resize;
-            background: #e5e7eb;
-        }
-        .resize-handle:hover {
-            background: #cbd5e1;
-        }
         .format-badge {
             padding: 2px 8px;
             border-radius: 12px;
             font-size: 0.75rem;
             font-weight: 500;
+        }
+        #videoPlayer {
+            max-width: 100%;
+            max-height: 100%;
+            transition: transform 0.5s ease;
+        }
+        .browser-container {
+            height: 300px;
+            border: 1px solid #e2e8f0;
+            border-radius: 0 0 8px 8px;
+            overflow: hidden;
+        }
+        .browser-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
         }
     </style>
     <script>
@@ -87,23 +100,23 @@
         <div class="mb-6">
             <h3 class="text-lg font-semibold text-gray-700 mb-2">Quick Formats:</h3>
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-                <button data-url="https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4" class="format-btn bg-blue-100 hover:bg-blue-200 text-blue-800 py-2 px-3 rounded-lg transition flex items-center">
+                <button data-url="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" class="format-btn bg-blue-100 hover:bg-blue-200 text-blue-800 py-2 px-3 rounded-lg transition flex items-center">
                     <span class="format-badge bg-blue-500 text-white mr-2">MP4</span> Big Buck Bunny
                 </button>
-                <button data-url="https://dl8.webmfiles.org/big-buck-bunny_trailer.mkv" class="format-btn bg-purple-100 hover:bg-purple-200 text-purple-800 py-2 px-3 rounded-lg transition flex items-center">
-                    <span class="format-badge bg-purple-500 text-white mr-2">MKV</span> Big Buck Bunny
+                <button data-url="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4" class="format-btn bg-purple-100 hover:bg-purple-200 text-purple-800 py-2 px-3 rounded-lg transition flex items-center">
+                    <span class="format-badge bg-purple-500 text-white mr-2">MP4</span> Elephants Dream
                 </button>
-                <button data-url="https://filesamples.com/samples/video/avi/sample_640x360.avi" class="format-btn bg-green-100 hover:bg-green-200 text-green-800 py-2 px-3 rounded-lg transition flex items-center">
-                    <span class="format-badge bg-green-500 text-white mr-2">AVI</span> Sample Video
+                <button data-url="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" class="format-btn bg-green-100 hover:bg-green-200 text-green-800 py-2 px-3 rounded-lg transition flex items-center">
+                    <span class="format-badge bg-green-500 text-white mr-2">MP4</span> For Bigger Blazes
                 </button>
-                <button data-url="https://filesamples.com/samples/video/mov/sample_640x360.mov" class="format-btn bg-yellow-100 hover:bg-yellow-200 text-yellow-800 py-2 px-3 rounded-lg transition flex items-center">
-                    <span class="format-badge bg-yellow-500 text-white mr-2">MOV</span> Sample Video
+                <button data-url="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4" class="format-btn bg-yellow-100 hover:bg-yellow-200 text-yellow-800 py-2 px-3 rounded-lg transition flex items-center">
+                    <span class="format-badge bg-yellow-500 text-white mr-2">MP4</span> For Bigger Escapes
                 </button>
-                <button data-url="https://sample-videos.com/video123/webm/720/big_buck_bunny_720p_1mb.webm" class="format-btn bg-red-100 hover:bg-red-200 text-red-800 py-2 px-3 rounded-lg transition flex items-center">
-                    <span class="format-badge bg-red-500 text-white mr-2">WEBM</span> Big Buck Bunny
+                <button data-url="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4" class="format-btn bg-red-100 hover:bg-red-200 text-red-800 py-2 px-3 rounded-lg transition flex items-center">
+                    <span class="format-badge bg-red-500 text-white mr-2">MP4</span> For Bigger Fun
                 </button>
-                <button data-url="https://sample-videos.com/video123/3gp/240/big_buck_bunny_240p_1mb.3gp" class="format-btn bg-indigo-100 hover:bg-indigo-200 text-indigo-800 py-2 px-3 rounded-lg transition flex items-center">
-                    <span class="format-badge bg-indigo-500 text-white mr-2">3GP</span> Big Buck Bunny
+                <button data-url="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4" class="format-btn bg-indigo-100 hover:bg-indigo-200 text-indigo-800 py-2 px-3 rounded-lg transition flex items-center">
+                    <span class="format-badge bg-indigo-500 text-white mr-2">MP4</span> For Bigger Joyrides
                 </button>
             </div>
         </div>
@@ -112,8 +125,8 @@
         <div class="bg-white rounded-xl shadow-md p-6 mb-6">
             <h2 class="text-2xl font-bold mb-4 text-gray-800">Enter Video URL</h2>
             <div class="flex flex-col md:flex-row gap-4">
-                <input type="text" id="videoUrl" placeholder="Paste video URL here..." 
-                       class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <input type="text" id="videoUrl" placeholder="Paste video URL here..."
+                        class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <button id="playButton" class="px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition">
                     <i class="fas fa-play mr-2"></i>Play Video
                 </button>
@@ -130,12 +143,15 @@
         <div id="playerSection" class="hidden mb-6">
             <div class="bg-white rounded-xl shadow-md overflow-hidden">
                 <div class="relative">
-                    <div class="video-container">
+                    <div class="video-container" id="videoContainer">
                         <div id="videoPlayerContainer">
                             <!-- Player will be inserted here -->
                         </div>
                     </div>
                     <div class="absolute top-4 right-4 flex space-x-2">
+                        <button id="rotateBtn" class="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70">
+                            <i class="fas fa-undo-alt"></i>
+                        </button>
                         <button id="fullscreenBtn" class="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70">
                             <i class="fas fa-expand"></i>
                         </button>
@@ -166,30 +182,15 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Resizable Custom Widget -->
-    <div class="custom-widget w-full" style="height: 200px;">
-        <div class="resize-handle" id="resizeHandle"></div>
-        <div class="container mx-auto px-4 h-full">
-            <div class="flex h-full bg-white rounded-t-lg shadow-md">
-                <div class="w-full h-full">
-                    <div class="flex items-center justify-between bg-gray-100 px-4 py-2 rounded-t-lg">
-                        <div class="flex items-center">
-                            <i class="fas fa-code text-indigo-600 mr-2"></i>
-                            <h3 class="font-semibold text-gray-800">Custom HTML/Text Area</h3>
-                        </div>
-                        <div class="flex space-x-2">
-                            <button id="minimizeBtn" class="text-gray-600 hover:text-gray-800">
-                                <i class="fas fa-window-minimize"></i>
-                            </button>
-                            <button id="maximizeBtn" class="text-gray-600 hover:text-gray-800">
-                                <i class="fas fa-window-maximize"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <textarea id="customContent" class="w-full h-4/5 p-4 border-t border-gray-200 rounded-b-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Enter your custom HTML or text here..."></textarea>
-                </div>
+        <!-- Browser Section -->
+        <div class="bg-white rounded-xl shadow-md mb-6">
+            <div class="flex justify-between items-center p-4 border-b cursor-pointer" id="toggleBrowser">
+                <h2 class="text-xl font-bold text-gray-800">Ad Network</h2>
+                <i class="fas fa-chevron-down transition-transform duration-200" id="browserToggleIcon"></i>
+            </div>
+            <div class="browser-container hidden" id="browserContent">
+                <iframe id="browserFrame" class="browser-iframe" src="https://www.profitableratecpm.com/x15h3u0m?key=e6f3c4cacc5320c17fd471ce66c9868f" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
             </div>
         </div>
     </div>
@@ -205,60 +206,59 @@
         // DOM Elements
         const videoUrlInput = document.getElementById('videoUrl');
         const playButton = document.getElementById('playButton');
+        const rotateBtn = document.getElementById('rotateBtn');
         const playerSection = document.getElementById('playerSection');
         const videoPlayerContainer = document.getElementById('videoPlayerContainer');
+        const videoContainer = document.getElementById('videoContainer');
         const fullscreenBtn = document.getElementById('fullscreenBtn');
         const downloadBtn = document.getElementById('downloadBtn');
         const sampleVideoBtn = document.getElementById('sampleVideoBtn');
         const recentVideosContainer = document.getElementById('recentVideosContainer');
         const refreshVideos = document.getElementById('refreshVideos');
         const historyBtn = document.getElementById('historyBtn');
-        const customContent = document.getElementById('customContent');
-        const minimizeBtn = document.getElementById('minimizeBtn');
-        const maximizeBtn = document.getElementById('maximizeBtn');
-        const resizeHandle = document.getElementById('resizeHandle');
         const formatButtons = document.querySelectorAll('.format-btn');
-        
-        // Supported video formats and platforms
-        const videoFormats = ['.mp4', '.mkv', '.avi', '.mov', '.webm', '.3gp', '.ogg'];
-        
-        // Sample video URLs
-        const sampleVideos = [
+        const browserFrame = document.getElementById('browserFrame');
+        const browserUrl = document.getElementById('browserUrl');
+        const browserBack = document.getElementById('browserBack');
+        const browserForward = document.getElementById('browserForward');
+        const browserRefresh = document.getElementById('browserRefresh');
+        const browserGo = document.getElementById('browserGo');
+
+        // Video URLs to cycle through
+        const cycleVideos = [
             {
-                url: 'https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4',
-                title: 'Big Buck Bunny (MP4)'
+                url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+                title: 'Big Buck Bunny'
             },
             {
-                url: 'https://dl8.webmfiles.org/big-buck-bunny_trailer.mkv',
-                title: 'Big Buck Bunny (MKV)'
+                url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+                title: 'Elephants Dream'
+            },
+            {
+                url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+                title: 'For Bigger Blazes'
             }
         ];
+        
+        // Sample video URLs (kept for the sample button)
+        const sampleVideos = cycleVideos.slice(0, 2);
 
         // Store recent video links
         let recentVideos = JSON.parse(localStorage.getItem('recentVideos')) || [];
         let currentVideoUrl = '';
-        let isResizing = false;
-        let startY, startHeight;
-        
+        let videoPlayer = null;
+        let rotationAngle = 0;
+        let browserRefreshInterval;
+
         // Initialize the app
         function init() {
             renderRecentVideos();
-            
-            // Set sample content in custom widget
-            customContent.value = `<div class="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
-    <h4 class="font-bold text-indigo-700 mb-2">Welcome to VidStream!</h4>
-    <p class="text-indigo-600">This is your custom HTML/text area. You can add:</p>
-    <ul class="list-disc pl-5 mt-2 text-indigo-600">
-        <li>Notes about videos</li>
-        <li>HTML code snippets</li>
-        <li>Embed codes</li>
-        <li>Any text content</li>
-    </ul>
-</div>`;
-            
+            setupBrowser();
+
             // Event Listeners
             playButton.addEventListener('click', playVideo);
             fullscreenBtn.addEventListener('click', toggleFullscreen);
+            rotateBtn.addEventListener('click', rotateVideo);
             sampleVideoBtn.addEventListener('click', loadSampleVideo);
             refreshVideos.addEventListener('click', renderRecentVideos);
             historyBtn.addEventListener('click', () => {
@@ -268,7 +268,7 @@
                 });
             });
             downloadBtn.addEventListener('click', downloadVideo);
-            
+
             // Format buttons
             formatButtons.forEach(btn => {
                 btn.addEventListener('click', function() {
@@ -276,41 +276,32 @@
                     playVideo();
                 });
             });
-            
+
             // Handle fullscreen change
             document.addEventListener('fullscreenchange', updateFullscreenIcon);
             document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
             document.addEventListener('mozfullscreenchange', updateFullscreenIcon);
             document.addEventListener('MSFullscreenChange', updateFullscreenIcon);
-            
-            // Widget controls
-            minimizeBtn.addEventListener('click', () => {
-                document.querySelector('.custom-widget').style.height = '40px';
-            });
-            
-            maximizeBtn.addEventListener('click', () => {
-                document.querySelector('.custom-widget').style.height = '200px';
-            });
-            
-            // Resize handle events
-            resizeHandle.addEventListener('mousedown', startResize);
-            document.addEventListener('mousemove', resizeWidget);
-            document.addEventListener('mouseup', stopResize);
-            
+
             // Check URL parameters for video link
             checkUrlForVideo();
+        }
+
+        // Setup browser functionality
+        function setupBrowser() {
+            // No setup needed - iframe loads directly
         }
 
         // Play video from input URL
         function playVideo() {
             const url = videoUrlInput.value.trim();
             currentVideoUrl = url;
-            
+
             if (!url) {
                 showToast('Please enter a valid video URL', 'error');
                 return;
             }
-            
+
             // Validate URL
             let validUrl;
             try {
@@ -319,49 +310,78 @@
                 showToast('Please enter a valid URL', 'error');
                 return;
             }
-            
+
             // Save to recent videos
             addToRecentVideos(url);
-            
+
             // Play video based on type
             playerSection.classList.remove('hidden');
-            
+
             // Clear previous player
             videoPlayerContainer.innerHTML = '';
-            
+
             // Create video element
-            const videoElement = document.createElement('video');
-            videoElement.id = 'videoPlayer';
-            videoElement.controls = true;
-            videoElement.className = 'w-full h-full';
-            videoElement.src = url;
-            videoElement.innerHTML = 'Your browser does not support the video tag.';
-            
-            videoPlayerContainer.appendChild(videoElement);
+            videoPlayer = document.createElement('video');
+            videoPlayer.id = 'videoPlayer';
+            videoPlayer.controls = true;
+            videoPlayer.className = 'w-full h-full';
+            videoPlayer.src = url;
+            videoPlayer.innerHTML = 'Your browser does not support the video tag.';
+
+            // Enable fullscreen functionality
+            videoPlayer.setAttribute('playsinline', '');
+            videoPlayer.setAttribute('webkit-playsinline', '');
+            videoPlayer.setAttribute('x-webkit-airplay', 'allow');
+
+            videoPlayerContainer.appendChild(videoPlayer);
             document.getElementById('videoTitle').textContent = extractVideoTitle(url);
+
+            // Handle video errors
+            videoPlayer.addEventListener('error', function() {
+                showToast('Error loading video. Please check the URL and try again.', 'error');
+            });
+        }
+
+        // Rotate video orientation with proper centering
+        function rotateVideo() {
+            if (!videoPlayer) return;
+
+            rotationAngle = (rotationAngle + 90) % 360;
+            videoPlayer.style.transform = `rotate(${rotationAngle}deg) translate(-50%, -50%)`;
+            videoPlayer.style.position = 'absolute';
+            videoPlayer.style.top = '50%';
+            videoPlayer.style.left = '50%';
+            videoPlayer.style.transformOrigin = 'center center';
+
+            // Toggle container aspect ratio
+            if (rotationAngle % 180 === 90) {
+                videoContainer.classList.add('rotated');
+            } else {
+                videoContainer.classList.remove('rotated');
+            }
         }
 
         // Add video to recent videos list
         function addToRecentVideos(url) {
             // Check if already exists
             const exists = recentVideos.some(video => video.url === url);
-            
+
             if (!exists) {
                 recentVideos.unshift({
                     url: url,
                     title: extractVideoTitle(url),
                     timestamp: new Date().toISOString()
                 });
-                
+
                 // Keep only last 10 videos
                 if (recentVideos.length > 10) {
                     recentVideos = recentVideos.slice(0, 10);
                 }
-                
+
                 // Save to localStorage
                 localStorage.setItem('recentVideos', JSON.stringify(recentVideos));
             }
-            
+
             renderRecentVideos();
         }
 
@@ -371,15 +391,15 @@
                 const urlObj = new URL(url);
                 const pathParts = urlObj.pathname.split('/');
                 let filename = pathParts[pathParts.length - 1];
-                
+
                 // Remove query parameters
                 filename = filename.split('?')[0];
-                
+
                 // Remove extension if present
                 if (filename.includes('.')) {
                     filename = filename.substring(0, filename.lastIndexOf('.'));
                 }
-                
+
                 // Replace special characters with spaces
                 return filename.replace(/[^a-zA-Z0-9]/g, ' ');
             } catch (e) {
@@ -397,7 +417,7 @@
                 `;
                 return;
             }
-            
+
             let html = '';
             recentVideos.forEach(video => {
                 // Detect format
@@ -421,8 +441,11 @@
                 } else if (video.url.includes('.3gp')) {
                     format = '3GP';
                     formatColor = 'indigo';
+                } else {
+                    format = 'LINK';
+                    formatColor = 'gray';
                 }
-                
+
                 html += `
                     <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:bg-indigo-50 transition">
                         <div class="flex justify-between items-start">
@@ -442,9 +465,9 @@
                     </div>
                 `;
             });
-            
+
             recentVideosContainer.innerHTML = html;
-            
+
             // Add event listeners to new buttons
             document.querySelectorAll('.play-recent-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
@@ -457,15 +480,19 @@
 
         // Toggle fullscreen mode
         function toggleFullscreen() {
-            const element = videoPlayerContainer;
-            
+            if (!videoPlayer) return;
+
+            const container = videoPlayerContainer;
+
             if (!document.fullscreenElement) {
-                if (element.requestFullscreen) {
-                    element.requestFullscreen();
-                } else if (element.webkitRequestFullscreen) {
-                    element.webkitRequestFullscreen();
-                } else if (element.msRequestFullscreen) {
-                    element.msRequestFullscreen();
+                if (container.requestFullscreen) {
+                    container.requestFullscreen().catch(err => {
+                        showToast(`Fullscreen failed: ${err.message}`, 'error');
+                    });
+                } else if (container.webkitRequestFullscreen) {
+                    container.webkitRequestFullscreen();
+                } else if (container.msRequestFullscreen) {
+                    container.msRequestFullscreen();
                 }
             } else {
                 if (document.exitFullscreen) {
@@ -496,7 +523,7 @@
                 showToast('No video loaded', 'error');
                 return;
             }
-            
+
             const a = document.createElement('a');
             a.href = currentVideoUrl;
             a.download = extractVideoTitle(currentVideoUrl) || 'video';
@@ -518,11 +545,12 @@
         function showToast(message, type = 'success') {
             const toast = document.createElement('div');
             toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg text-white ${
-                type === 'error' ? 'bg-red-500' : 'bg-green-500'
+                type === 'error' ? 'bg-red-500' : 
+                type === 'info' ? 'bg-blue-500' : 'bg-green-500'
             }`;
             toast.textContent = message;
             document.body.appendChild(toast);
-            
+
             setTimeout(() => {
                 toast.classList.add('opacity-0', 'transition-opacity', 'duration-500');
                 setTimeout(() => {
@@ -535,7 +563,7 @@
         function checkUrlForVideo() {
             const params = new URLSearchParams(window.location.search);
             const videoParam = params.get('video');
-            
+
             if (videoParam) {
                 videoUrlInput.value = decodeURIComponent(videoParam);
                 currentVideoUrl = decodeURIComponent(videoParam);
@@ -543,30 +571,98 @@
             }
         }
 
-        // Widget resize functionality
-        function startResize(e) {
-            isResizing = true;
-            const widget = document.querySelector('.custom-widget');
-            startY = e.clientY;
-            startHeight = parseInt(document.defaultView.getComputedStyle(widget).height, 10);
-            e.preventDefault();
+        // Toggle browser section
+        function setupBrowserToggle() {
+            const toggleBtn = document.getElementById('toggleBrowser');
+            const content = document.getElementById('browserContent');
+            const icon = document.getElementById('browserToggleIcon');
+
+            toggleBtn.addEventListener('click', () => {
+                content.classList.toggle('hidden');
+                icon.classList.toggle('rotate-180');
+            });
         }
 
-        function resizeWidget(e) {
-            if (!isResizing) return;
-            const widget = document.querySelector('.custom-widget');
-            const height = startHeight + (e.clientY - startY);
-            if (height > 100 && height < window.innerHeight * 0.7) {
-                widget.style.height = `${height}px`;
+        // Auto-refresh iframe and handle redirects
+        function setupAdsterraRefresh() {
+            const iframe = document.getElementById('browserFrame');
+            let refreshCount = 0;
+
+            // Refresh every 5 minutes (300000ms)
+            const refreshInterval = setInterval(() => {
+                iframe.src = iframe.src;
+                refreshCount++;
+                console.log(`Ad refreshed ${refreshCount} times`);
+            }, 300000);
+
+            // Check for redirects every 10 seconds
+            setInterval(() => {
+                try {
+                    // This will throw an error if domain changes due to same-origin policy
+                    iframe.contentWindow.location.href;
+                } catch (e) {
+                    // If redirected, reset to original URL
+                    iframe.src = "https://www.profitableratecpm.com/x15h3u0m?key=e6f3c4cacc5320c17fd471ce66c9868f";
+                }
+            }, 10000);
+        }
+
+        // Video cycling variables
+        let currentCycleIndex = 0;
+        let cycleInterval;
+        let cycleTimeout;
+
+        // Start video cycling
+        function startVideoCycle() {
+            // Play first video immediately
+            playCycleVideo();
+            
+            // Set up the 5-minute cycle
+            cycleInterval = setInterval(() => {
+                currentCycleIndex = 0;
+                playCycleVideo();
+            }, 5 * 60 * 1000); // 5 minutes
+        }
+
+        // Play next video in cycle
+        function playCycleVideo() {
+            if (currentCycleIndex >= cycleVideos.length) return;
+            
+            const video = cycleVideos[currentCycleIndex];
+            videoUrlInput.value = video.url;
+            currentVideoUrl = video.url;
+            playVideo();
+            
+            currentCycleIndex++;
+            
+            // Schedule next video after 1 minute if not last in cycle
+            if (currentCycleIndex < cycleVideos.length) {
+                cycleTimeout = setTimeout(playCycleVideo, 60 * 1000); // 1 minute
             }
         }
 
-        function stopResize() {
-            isResizing = false;
+        // Stop video cycling
+        function stopVideoCycle() {
+            clearInterval(cycleInterval);
+            clearTimeout(cycleTimeout);
         }
 
         // Initialize the app when DOM is loaded
-        document.addEventListener('DOMContentLoaded', init);
+        document.addEventListener('DOMContentLoaded', () => {
+            init();
+            setupBrowserToggle();
+            setupAdsterraRefresh();
+            startVideoCycle();
+        });
+
+        // Stop cycling when page is hidden (optional)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                stopVideoCycle();
+            } else {
+                startVideoCycle();
+            }
+        });
     </script>
 </body>
 </html>
