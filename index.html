@@ -19,9 +19,6 @@
             align-items: center;
             overflow: hidden;
         }
-        .video-container.rotated {
-            aspect-ratio: 9/16;
-        }
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.05); }
@@ -59,6 +56,11 @@
             border: 1px solid #e2e8f0;
             border-radius: 0 0 8px 8px;
             overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .browser-container.hidden {
+            height: 0;
+            border: none;
         }
         .browser-iframe {
             width: 100%;
@@ -185,12 +187,14 @@
 
         <!-- Browser Section -->
         <div class="bg-white rounded-xl shadow-md mb-6">
-            <div class="flex justify-between items-center p-4 border-b cursor-pointer" id="toggleBrowser">
+            <div class="p-4 border-b flex justify-between items-center">
                 <h2 class="text-xl font-bold text-gray-800">Ad Network</h2>
-                <i class="fas fa-chevron-down transition-transform duration-200" id="browserToggleIcon"></i>
+                <button id="toggleBrowser" class="text-gray-600 hover:text-gray-800">
+                    <i class="fas fa-minus"></i>
+                </button>
             </div>
-            <div class="browser-container hidden" id="browserContent">
-                <iframe id="browserFrame" class="browser-iframe" src="https://www.profitableratecpm.com/x15h3u0m?key=e6f3c4cacc5320c17fd471ce66c9868f" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
+            <div class="browser-container" id="browserContent">
+                <iframe id="browserFrame" class="browser-iframe" src="https://www.profitableratecpm.com/x15h3u0m?key=e6f3c4cacc5320c17fd471ce66c9868f" sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation"></iframe>
             </div>
         </div>
     </div>
@@ -254,6 +258,19 @@
         function init() {
             renderRecentVideos();
             setupBrowser();
+
+            // Browser toggle functionality
+            const toggleBrowser = document.getElementById('toggleBrowser');
+            const browserContent = document.getElementById('browserContent');
+            toggleBrowser.addEventListener('click', () => {
+                if (browserContent.classList.contains('hidden')) {
+                    browserContent.classList.remove('hidden');
+                    toggleBrowser.innerHTML = '<i class="fas fa-minus"></i>';
+                } else {
+                    browserContent.classList.add('hidden');
+                    toggleBrowser.innerHTML = '<i class="fas fa-plus"></i>';
+                }
+            });
 
             // Event Listeners
             playButton.addEventListener('click', playVideo);
@@ -324,7 +341,7 @@
             videoPlayer = document.createElement('video');
             videoPlayer.id = 'videoPlayer';
             videoPlayer.controls = true;
-            videoPlayer.className = 'w-full h-full';
+            videoPlayer.className = 'w-full h-full object-contain';
             videoPlayer.src = url;
             videoPlayer.innerHTML = 'Your browser does not support the video tag.';
 
@@ -332,6 +349,7 @@
             videoPlayer.setAttribute('playsinline', '');
             videoPlayer.setAttribute('webkit-playsinline', '');
             videoPlayer.setAttribute('x-webkit-airplay', 'allow');
+            videoPlayer.style.transition = 'transform 0.3s ease';
 
             videoPlayerContainer.appendChild(videoPlayer);
             document.getElementById('videoTitle').textContent = extractVideoTitle(url);
@@ -342,22 +360,30 @@
             });
         }
 
-        // Rotate video orientation with proper centering
+        // Rotate video through 0°, 90°, 180°, 270°
         function rotateVideo() {
             if (!videoPlayer) return;
-
-            rotationAngle = (rotationAngle + 90) % 360;
-            videoPlayer.style.transform = `rotate(${rotationAngle}deg) translate(-50%, -50%)`;
-            videoPlayer.style.position = 'absolute';
-            videoPlayer.style.top = '50%';
-            videoPlayer.style.left = '50%';
-            videoPlayer.style.transformOrigin = 'center center';
-
-            // Toggle container aspect ratio
-            if (rotationAngle % 180 === 90) {
-                videoContainer.classList.add('rotated');
+            
+            const currentTransform = videoPlayer.style.transform || '';
+            let newTransform = '';
+            
+            if (currentTransform.includes('rotate(90deg)')) {
+                newTransform = 'rotate(180deg)';
+            } else if (currentTransform.includes('rotate(180deg)')) {
+                newTransform = 'rotate(270deg)';
+            } else if (currentTransform.includes('rotate(270deg)')) {
+                newTransform = '';
             } else {
-                videoContainer.classList.remove('rotated');
+                newTransform = 'rotate(90deg)';
+            }
+            
+            videoPlayer.style.transform = newTransform;
+            
+            // Adjust container aspect ratio for landscape/portrait
+            if (newTransform.includes('90deg') || newTransform.includes('270deg')) {
+                videoContainer.style.aspectRatio = '9/16';
+            } else {
+                videoContainer.style.aspectRatio = '16/9';
             }
         }
 
@@ -482,7 +508,7 @@
         function toggleFullscreen() {
             if (!videoPlayer) return;
 
-            const container = videoPlayerContainer;
+            const container = videoContainer;
 
             if (!document.fullscreenElement) {
                 if (container.requestFullscreen) {
@@ -491,6 +517,8 @@
                     });
                 } else if (container.webkitRequestFullscreen) {
                     container.webkitRequestFullscreen();
+                } else if (container.mozRequestFullScreen) {
+                    container.mozRequestFullScreen();
                 } else if (container.msRequestFullscreen) {
                     container.msRequestFullscreen();
                 }
@@ -499,6 +527,8 @@
                     document.exitFullscreen();
                 } else if (document.webkitExitFullscreen) {
                     document.webkitExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
                 } else if (document.msExitFullscreen) {
                     document.msExitFullscreen();
                 }
@@ -512,6 +542,7 @@
                 document.mozFullScreenElement ||
                 document.msFullscreenElement) {
                 fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
+                videoPlayer.controls = true;
             } else {
                 fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
             }
@@ -571,40 +602,28 @@
             }
         }
 
-        // Toggle browser section
-        function setupBrowserToggle() {
-            const toggleBtn = document.getElementById('toggleBrowser');
-            const content = document.getElementById('browserContent');
-            const icon = document.getElementById('browserToggleIcon');
+        // Ad rotation links
+        const adLinks = [
+            "https://www.profitableratecpm.com/znq39tdz5s?key=91d9445d0dc15654fdffa6126eb66bc1",
+            "https://www.profitableratecpm.com/x15h3u0m?key=e6f3c4cacc5320c17fd471ce66c9868f",
+            "https://www.profitableratecpm.com/zky35p4b?key=550a9e859fe73aa3cd25e2105c966dc5"
+        ];
+        let currentAdIndex = 0;
+        let adRotationInterval;
 
-            toggleBtn.addEventListener('click', () => {
-                content.classList.toggle('hidden');
-                icon.classList.toggle('rotate-180');
-            });
-        }
-
-        // Auto-refresh iframe and handle redirects
-        function setupAdsterraRefresh() {
+        // Rotate through ad links every 30 seconds
+        function startAdRotation() {
             const iframe = document.getElementById('browserFrame');
-            let refreshCount = 0;
-
-            // Refresh every 5 minutes (300000ms)
-            const refreshInterval = setInterval(() => {
-                iframe.src = iframe.src;
-                refreshCount++;
-                console.log(`Ad refreshed ${refreshCount} times`);
-            }, 300000);
-
-            // Check for redirects every 10 seconds
-            setInterval(() => {
-                try {
-                    // This will throw an error if domain changes due to same-origin policy
-                    iframe.contentWindow.location.href;
-                } catch (e) {
-                    // If redirected, reset to original URL
-                    iframe.src = "https://www.profitableratecpm.com/x15h3u0m?key=e6f3c4cacc5320c17fd471ce66c9868f";
-                }
-            }, 10000);
+            
+            // Load first ad immediately
+            iframe.src = adLinks[currentAdIndex];
+            
+            // Set up rotation interval
+            adRotationInterval = setInterval(() => {
+                currentAdIndex = (currentAdIndex + 1) % adLinks.length;
+                iframe.src = adLinks[currentAdIndex];
+                console.log(`Rotated to ad ${currentAdIndex + 1}`);
+            }, 30000); // 30 seconds
         }
 
         // Video cycling variables
@@ -650,8 +669,7 @@
         // Initialize the app when DOM is loaded
         document.addEventListener('DOMContentLoaded', () => {
             init();
-            setupBrowserToggle();
-            setupAdsterraRefresh();
+            startAdRotation();
             startVideoCycle();
         });
 
@@ -663,6 +681,37 @@
                 startVideoCycle();
             }
         });
+
+        // Auto-clicker for iframe links (stays within iframe)
+        function setupAutoClicker() {
+            const iframe = document.getElementById('browserFrame');
+            
+            // Wait for iframe to load
+            iframe.addEventListener('load', function() {
+                try {
+                    // Get all links in iframe that target _self
+                    const links = iframe.contentDocument.querySelectorAll('a[target="_self"], a:not([target])');
+                    
+                    // Click random link every 3-10 seconds
+                    setInterval(() => {
+                        if (links.length > 0) {
+                            const randomLink = links[Math.floor(Math.random() * links.length)];
+                            // Only click if href is same origin or relative path
+                            if (randomLink.href.startsWith(iframe.src.split('?')[0]) || 
+                                randomLink.href.startsWith('/') || 
+                                randomLink.href.startsWith('./')) {
+                                console.log('Auto-clicking:', randomLink.href);
+                                randomLink.click();
+                            }
+                        }
+                    }, Math.random() * 7000 + 3000); // Random interval between 3-10 seconds
+                    
+                } catch (e) {
+                    console.log('Auto-clicker error:', e.message);
+                }
+            });
+        }
+
     </script>
 </body>
 </html>
